@@ -6,4 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+shared/secrets.json
 preview-website.html

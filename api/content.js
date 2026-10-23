@@ -1,6 +1,7 @@
 import { requireAdminAuth } from '../shared/auth.mjs';
 import { applyApiSecurityHeaders, isCrossSiteRequest, parseJsonBody } from '../shared/security.mjs';
 import { getSiteData, getStorageMode, saveSiteData, saveUploadedAsset } from '../shared/store.mjs';
+import { stripSecretsFromSiteData } from '../shared/secrets.mjs';
 
 const MAX_CMS_BODY_BYTES = 56 * 1024 * 1024; // base64 payload: images + (locally) video uploads.
 // Catatan: Vercel membatasi body serverless di ~4.5 MB, sehingga batas efektif di produksi
@@ -11,7 +12,8 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const data = await getSiteData();
+      // Endpoint ini publik — pastikan tidak ada rahasia yang ikut ter-kirim.
+      const data = stripSecretsFromSiteData(await getSiteData());
       return res.status(200).json({ ok: true, data, storageMode: getStorageMode() });
     } catch {
       return res.status(500).json({ error: 'Gagal memuat konten situs.' });
@@ -50,7 +52,8 @@ export default async function handler(req, res) {
     }
 
     if (action === 'save') {
-      const result = await saveSiteData(body.data);
+      // Rahasia (API key) tidak pernah disimpan di dalam data CMS publik.
+      const result = await saveSiteData(stripSecretsFromSiteData(body.data));
       return res.status(200).json({ ok: true, ...result });
     }
 

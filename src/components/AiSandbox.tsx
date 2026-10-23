@@ -1,109 +1,26 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowUp, Check, Copy, LoaderCircle, RotateCcw, Square, Trash2 } from 'lucide-react';
+import { ArrowUp, Check, Copy, RotateCcw, Square, Trash2 } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
 import { Chapter, Mark } from './Primitives';
 import RelayMark from './RelayMark';
-
-type Message = { role: 'user' | 'assistant'; content: string };
+import { useRelayChat } from '../hooks/useRelayChat';
 
 export default function AiSandbox() {
   const { siteData } = useSiteData();
   const { relay, identity } = siteData;
 
-  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
   const [copied, setCopied] = useState(-1);
   const [copyStatus, setCopyStatus] = useState('');
-  const [online, setOnline] = useState(true);
-  const [aiProvider, setAiProvider] = useState('');
-  const [aiModel, setAiModel] = useState('');
+  const { messages, busy, error, online, provider, model, send, reset, stop } = useRelayChat();
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const controller = useRef<AbortController | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
-  const lock = useRef(false);
-
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    update();
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    return () => {
-      controller.current?.abort();
-      clearTimeout(copyTimer.current);
-      window.removeEventListener('online', update);
-      window.removeEventListener('offline', update);
-    };
-  }, []);
 
   useEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages, busy, error]);
-
-  // Menampilkan engine AI yang sedang aktif (Gemini / provider lain / pengetahuan lokal).
-  useEffect(() => {
-    let active = true;
-    fetch('/api/health', { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body) => {
-        if (!active || !body) return;
-        setAiProvider(typeof body.aiProvider === 'string' ? body.aiProvider : '');
-        setAiModel(typeof body.aiModel === 'string' ? body.aiModel : '');
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  async function send(text: string, retry = false) {
-    if (!text.trim() || lock.current || !online || (retry && messages.at(-1)?.role !== 'user')) return;
-    lock.current = true;
-    setBusy(true);
-    setError('');
-    const base = messages.at(-1)?.role === 'user' ? messages.slice(0, -1) : messages;
-    const next = retry ? messages : [...base, { role: 'user' as const, content: text.trim() }];
-    setMessages(next);
-    if (!retry) setInput('');
-    const abort = new AbortController();
-    controller.current = abort;
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      abort.abort();
-    }, 25000);
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next.slice(-8).map((m) => ({ ...m, content: m.content.slice(0, 1200) })) }),
-        signal: abort.signal,
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok || typeof body.text !== 'string' || !body.text.trim())
-        throw new Error(body.error || 'Layanan AI sementara tidak tersedia. Coba lagi nanti.');
-      setMessages([...next, { role: 'assistant', content: body.text }]);
-    } catch (err) {
-      setError(
-        abort.signal.aborted
-          ? timedOut
-            ? 'Respons terlalu lama. Coba lagi sebentar lagi.'
-            : 'Respons dihentikan. Kamu bisa mencoba lagi.'
-          : err instanceof Error
-          ? err.message
-          : 'Koneksi terputus. Coba lagi.'
-      );
-    } finally {
-      clearTimeout(timer);
-      lock.current = false;
-      setBusy(false);
-      controller.current = null;
-      textarea.current?.focus();
-    }
-  }
 
   async function copy(text: string, i: number) {
     clearTimeout(copyTimer.current);
@@ -120,12 +37,17 @@ export default function AiSandbox() {
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    void send(input);
+    const text = input.trim();
+    if (!text || busy) return;
+    setInput('');
+    void send(text);
+    textarea.current?.focus();
   }
 
   const lastUser = messages.at(-1)?.role === 'user' ? messages.at(-1) : undefined;
   const welcomeTitleLines = (relay.welcomeTitle || 'Rasa penasaranmu\nboleh mulai di sini.').split('\n');
   const welcomeSubLines = (relay.welcomeSub || `Aku Relay, representasi AI ${identity.name}.`).split('\n');
+  const engine = provider === 'gemini' ? `Gemini${model ? ` · ${model}` : ''}` : provider === 'upstream' ? `LLM${model ? ` · ${model}` : ''}` : provider === 'webhook' ? 'Webhook AI' : 'Pengetahuan lokal';
 
   return (
     <section className="lab section-pad" id="lab" aria-labelledby="lab-title">
@@ -155,15 +77,9 @@ export default function AiSandbox() {
               <RelayMark />
               <span>Relay</span>
               <small>Personal AI</small>
-              {aiProvider && (
-                <small className="chat-engine" title={aiModel ? `Model: ${aiModel}` : undefined}>
-                  {aiProvider === 'gemini'
-                    ? `Gemini${aiModel ? ` · ${aiModel}` : ''}`
-                    : aiProvider === 'upstream'
-                      ? `LLM${aiModel ? ` · ${aiModel}` : ''}`
-                      : aiProvider === 'webhook'
-                        ? 'Webhook AI'
-                        : 'Pengetahuan lokal'}
+              {provider && (
+                <small className="chat-engine" title={model ? `Model: ${model}` : undefined}>
+                  {engine}
                 </small>
               )}
             </div>
@@ -171,8 +87,7 @@ export default function AiSandbox() {
               className="icon-button"
               disabled={!messages.length || busy}
               onClick={() => {
-                setMessages([]);
-                setError('');
+                reset();
                 textarea.current?.focus();
               }}
               aria-label="Hapus percakapan"
@@ -213,20 +128,34 @@ export default function AiSandbox() {
               </div>
             )}
             {messages.map((m, i) => (
-              <div className={`chat-message message-${m.role}`} key={i}>
-                <span className="message-role">{m.role === 'user' ? 'KAMU' : 'RELAY'}</span>
-                <p>{m.content}</p>
+              <div className={`bubble-row bubble-row-${m.role}`} key={i}>
                 {m.role === 'assistant' && (
-                  <button onClick={() => copy(m.content, i)} className="copy-button" aria-label="Salin jawaban">
-                    {copied === i ? <Check size={13} /> : <Copy size={13} />}
-                  </button>
+                  <span className="bubble-avatar small" aria-hidden="true">
+                    <RelayMark />
+                  </span>
                 )}
+                <div className="bubble-message">
+                  <p>{m.content}</p>
+                  {m.role === 'assistant' && (
+                    <footer>
+                      <button onClick={() => copy(m.content, i)} aria-label="Salin jawaban">
+                        {copied === i ? <Check size={12} /> : <Copy size={12} />}
+                      </button>
+                    </footer>
+                  )}
+                </div>
               </div>
             ))}
             {busy && (
-              <div className="chat-thinking" role="status">
-                <LoaderCircle size={15} className="spin" />
-                Sedang menyusun jawaban…
+              <div className="bubble-row bubble-row-assistant">
+                <span className="bubble-avatar small" aria-hidden="true">
+                  <RelayMark />
+                </span>
+                <div className="bubble-message bubble-typing" role="status">
+                  <span />
+                  <span />
+                  <span />
+                </div>
               </div>
             )}
             {error && (
@@ -262,17 +191,21 @@ export default function AiSandbox() {
               rows={1}
               value={input}
               maxLength={1200}
-              placeholder="Tanyakan sesuatu…"
+              placeholder={online ? 'Tanyakan sesuatu…' : 'Kamu sedang offline'}
+              disabled={!online}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                   e.preventDefault();
-                  void send(input);
+                  const text = input.trim();
+                  if (!text || busy) return;
+                  setInput('');
+                  void send(text);
                 }
               }}
             />
             {busy ? (
-              <button type="button" onClick={() => controller.current?.abort()} aria-label="Hentikan respons">
+              <button type="button" onClick={stop} aria-label="Hentikan respons">
                 <Square size={15} />
               </button>
             ) : (

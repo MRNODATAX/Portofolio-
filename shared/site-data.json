@@ -811,7 +811,15 @@
       "Proyek AI Agent & Bot apa yang sedang dibangun?",
       "Bagaimana cara menghubungi No_Data?"
     ],
-    "customKnowledge": ""
+    "customKnowledge": "",
+    "aiModel": "gemini-2.5-flash",
+    "bubble": {
+      "enabled": true,
+      "position": "right",
+      "launcherLabel": "Tanya Relay AI",
+      "greeting": "Halo! Aku Relay, representasi AI No_Data. Tanyakan apa saja tentang karya, perjalanan, sertifikat, atau cara kerja aku.",
+      "autoOpenDelayMs": 0
+    }
   },
   "ethos": {
     "chapterTitle": "THE ETHOS",

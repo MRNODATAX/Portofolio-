@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { buildPortfolioSystemPrompt, answerLocally } from '../shared/knowledge.mjs';
 import { askGemini, isGeminiConfigured } from '../shared/gemini.mjs';
+import { resolveSecret } from '../shared/secrets.mjs';
 import {
   applyApiSecurityHeaders,
   isCrossSiteRequest,
@@ -111,9 +112,13 @@ export default async function handler(req, res) {
     const systemPrompt = buildPortfolioSystemPrompt(siteData);
     const latestUserMessage = messages.at(-1).content;
 
-    // 1) Google Gemini (native) — aktif cukup dengan mengisi GEMINI_API_KEY.
-    if (isGeminiConfigured(process.env)) {
-      const gemini = await askGemini(systemPrompt, messages);
+    // 1) Google Gemini (native) — key bisa dari Environment Variable maupun dari
+    //    brankas yang diisi admin lewat /admin (tersimpan terenkripsi).
+    const geminiKey = isGeminiConfigured(process.env)
+      ? process.env.GEMINI_API_KEY.trim()
+      : (await resolveSecret('geminiApiKey')).value;
+    if (geminiKey) {
+      const gemini = await askGemini(systemPrompt, messages, { apiKey: geminiKey });
       if (gemini.text) return res.status(200).json({ text: gemini.text, provider: 'gemini', model: gemini.model });
     }
 

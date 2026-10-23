@@ -11,6 +11,7 @@ import Ecosystem from './components/Ecosystem';
 import Journey from './components/Journey';
 import SplashScreen from './components/SplashScreen';
 import AiSandbox from './components/AiSandbox';
+import RelayBubble from './components/RelayBubble';
 import Certificates from './components/Certificates';
 import Personal from './components/Personal';
 import { useMotion } from './hooks/useMotion';
@@ -369,6 +370,7 @@ export default function App() {
           </div>
         </footer>
       </main>
+      <RelayBubble />
     </>
   );
 }

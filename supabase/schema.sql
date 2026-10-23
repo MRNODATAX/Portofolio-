@@ -21,6 +21,15 @@ create table if not exists public.visitor_reviews (
   created_at timestamptz not null default now()
 );
 
+-- 3. Brankas Rahasia Integrasi (API key Gemini yang diisi dari /admin)
+-- Isinya SELALU terenkripsi (AES-256-GCM + scrypt) oleh server sebelum disimpan,
+-- dan tidak pernah dikembalikan ke browser — UI hanya menerima versi tersensor.
+create table if not exists public.site_secrets (
+  id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_visitor_reviews_created_at
   on public.visitor_reviews (created_at desc);
 
@@ -32,6 +41,7 @@ create index if not exists idx_visitor_reviews_voter_hash
 -- menulis data, sehingga tabel 100% aman dari manipulasi langsung dari browser.
 alter table public.site_cms enable row level security;
 alter table public.visitor_reviews enable row level security;
+alter table public.site_secrets enable row level security;
 
 -- 4. Bucket Storage publik untuk upload gambar proyek / sertifikat / waifu
 insert into storage.buckets (id, name, public)

@@ -187,6 +187,14 @@ export interface SiteData {
     welcomeSub: string;
     prompts: string[];
     customKnowledge: string;
+    aiModel?: string;
+    bubble?: {
+      enabled: boolean;
+      position: 'left' | 'right';
+      launcherLabel: string;
+      greeting: string;
+      autoOpenDelayMs: number;
+    };
   };
   certificates: {
     chapterTitle: string;
