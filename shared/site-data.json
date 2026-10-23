@@ -1,0 +1,890 @@
+{
+  "identity": {
+    "name": "No_Data",
+    "fullName": "Rahman Zuhri",
+    "brand": "NODATA OFFICIAL",
+    "role": "Web & App Developer · AI Automation",
+    "education": "Fresh Graduate (Alumni Pondok Pesantren 2025)",
+    "location": "Jakarta, Indonesia",
+    "markImage": "/images/nodata-logo-hd.jpg",
+    "portraitImage": "/images/nodata-portrait.jpg",
+    "portraitFocal": "center 42%",
+    "heroEyebrow": "A PERSONAL DIGITAL ARCHIVE",
+    "heroTitleLine1": "Learning",
+    "heroTitleItalic": "in Progress.",
+    "heroDescription": "Aku No_Data (Rahman Zuhri). Aktif menggarap side project web & app development serta otomatisasi AI — mulai dari AI Agent, bot WhatsApp & Telegram, desain branding, hingga analisis pasar finansial.",
+    "heroIdentityHeading": "STRUCTURED. ADAPTIVE. ALWAYS CURIOUS.",
+    "heroIdentitySub": "Rahman Zuhri / NODATA OFFICIAL · Fresh Graduate · Jakarta, Indonesia",
+    "heroCorner": "FRESH GRADUATE. ALWAYS GROWING.",
+    "heroExploringLabel": "CURRENTLY EXPLORING",
+    "heroExploringText": "Web, App & AI\nBot Automation",
+    "heroLocationLabel": "JAKARTA, ID",
+    "heroLocationSub": "Research & build.",
+    "signature": "No_Data.",
+    "heroStack": {
+      "portraitCaption": "Fresh Graduate · Web & App Dev",
+      "workTitle": "Selected Works",
+      "workCaption": "Research. Build. Automate.",
+      "workImage": "/components/works/repo-flow.svg",
+      "personalCaption": "A little more me."
+    }
+  },
+  "about": {
+    "chapterTitle": "BEYOND THE CODE",
+    "headingLine1": "How it started.",
+    "headingItalic": "Sedikit konteks.",
+    "values": [
+      "Hardware & OS roots",
+      "Research-first build",
+      "Human × AI"
+    ],
+    "lead": "Ketertarikanku pada dunia teknologi berakar dari rasa penasaran masa kecil—mengulik perangkat keras, bermain game, hingga terinspirasi oleh visual dan kultur komputasi dalam serial Mr. Robot. Namun, titik balik yang sesungguhnya baru dimulai setelah lulus dari pondok pesantren pada tahun 2025, saat aku mulai menyelami sistem operasi, meriset arsitektur perangkat lunak, dan mengeksekusi baris kode pertama.",
+    "motivation": "Di sela-sela aktivitas utama, aku aktif mengerjakan berbagai side project pengembangan web, aplikasi, serta otomatisasi berbasis AI. Saat ini fokusku mendalami AI Agent, pembuatan bot otomatisasi WhatsApp & Telegram, desain branding, hingga analisis pasar finansial (financial market analysis).",
+    "approach": "Setiap proyek selalu diawali dengan riset dan perencanaan yang terstruktur sebelum masuk ke tahap eksekusi. Aku terbiasa mengintegrasikan AI modern untuk mempercepat alur kerja harian—fleksibel bekerja mandiri dari hulu ke hilir maupun berkolaborasi dalam tim untuk skala proyek yang kompleks."
+  },
+  "archive": {
+    "chapterTitle": "THE DIGITAL ARCHIVE",
+    "headingLine1": "Selected Works.",
+    "headingItalic": "Build. Learn. Repeat.",
+    "intro": "Kumpulan proyek, sistem automasi, dan eksperimen web & aplikasi yang pernah aku bangun — mulai dari solusi terapan aktif, bot cerdas, hingga prototipe eksplorasi.",
+    "projects": [
+      {
+        "id": "am-proaktif",
+        "name": "Gemini Web AI Chat",
+        "category": "AI Tools",
+        "url": "https://github.com/MRNODATAX",
+        "description": "Aplikasi web obrolan mandiri yang mengintegrasikan API Gemini secara langsung dengan pengelolaan konteks percakapan, respons cepat, dan antarmuka bersih untuk riset harian.",
+        "summary": "Proyek tonggak pertama (2025): aplikasi web obrolan mandiri yang terhubung langsung ke API Gemini.",
+        "problem": "Membutuhkan ruang obrolan AI ringan yang dapat dikustomisasi penuh sekaligus menjadi eksperimen nyata pertama menghubungkan antarmuka web ke REST API model bahasa.",
+        "exploration": "Merancang arsitektur request asinkron, riwayat sesi percakapan, serta penanganan respons Gemini API secara langsung dari web.",
+        "outcome": "Menjadi proyek pembuka jalan pada tahun 2025 yang memicu eksplorasi lebih jauh ke ekosistem AI Agent dan bot otomatisasi.",
+        "ecosystem": [
+          "JavaScript",
+          "Gemini API",
+          "REST API",
+          "Web UI"
+        ],
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/am-proaktif.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "repo-flow",
+        "name": "WA & Telegram AI Bot Engine",
+        "category": "Automation",
+        "url": "https://github.com/MRNODATAX",
+        "description": "Mesin otomatisasi pesan multi-kanal untuk WhatsApp dan Telegram yang menggabungkan command router modular, integrasi AI Agent kontekstual, serta eksekusi tugas terjadwal.",
+        "problem": "Penanganan pesan berulang, pemantauan notifikasi, dan pengambilan informasi cepat di grup maupun kanal pribadi membutuhkan alur kerja otomatis yang selalu siaga.",
+        "exploration": "Membangun arsitektur event-driven webhook dan antrean pesan ringan yang menghubungkan platform perpesanan langsung ke penalaran model AI.",
+        "outcome": "Digunakan sebagai fondasi eksperimen automasi aktif untuk asisten percakapan dan utilitas produktivitas harian.",
+        "ecosystem": [
+          "Node.js",
+          "WhatsApp Bot",
+          "Telegram API",
+          "AI Agent"
+        ],
+        "summary": "Sistem bot otomatisasi WhatsApp & Telegram terarah dengan integrasi AI Agent dan webhook modular.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/repo-flow.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "finora-journey",
+        "name": "Finora — Market & Capital Journal",
+        "category": "Productivity",
+        "url": "https://github.com/MRNODATAX",
+        "description": "Ruang kerja pencatatan arus kas dan jurnal financial market analysis untuk mendokumentasikan skenario posisi, manajemen risiko, serta evaluasi performa berkala.",
+        "summary": "Jurnal analisis pasar finansial, pencatatan arus kas, dan evaluasi rasio risiko secara terstruktur.",
+        "problem": "Analisis pasar finansial dan pengelolaan modal sering terpecah di banyak catatan tanpa struktur evaluasi risiko yang konsisten.",
+        "exploration": "Menggabungkan pencatatan transaksi cepat, metrik rasio risiko, dan ringkasan visual yang mudah ditinjau ulang sebelum eksekusi.",
+        "outcome": "Mendukung kebiasaan riset terstruktur dalam mempelajari dinamika pasar finansial dan disiplin manajemen modal.",
+        "ecosystem": [
+          "React",
+          "TypeScript",
+          "Market Analysis",
+          "Data UI"
+        ],
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/finora-journey.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "veritas",
+        "name": "Veritas (Artikel OCR)",
+        "category": "AI Tools",
+        "url": "https://artikel-ocr.vercel.app/",
+        "description": "Antarmuka analisis artikel ilmiah, PDF, dan URL dengan ringkasan, ekstraksi metodologi, deteksi bias, serta ruang tanya jawab berbasis dokumen. Situs menampilkan integrasi OCR iLovePDF.",
+        "problem": "Membaca dokumen ilmiah panjang atau artikel web bertele-tele sangat memakan waktu, terutama ketika menyalin teks manual dari PDF pindaian.",
+        "exploration": "Integrasi pipeline OCR andal dipadukan dengan kecerdasan buatan perangkum teks untuk analisis dokumen secepat kilat.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "React",
+          "OCR",
+          "iLovePDF API"
+        ],
+        "summary": "Analisis PDF dan artikel URL dengan ringkasan, metodologi, dan konteks dokumen.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/veritas.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "tierlist-maker",
+        "name": "Tierlist Maker",
+        "category": "Utilities",
+        "url": "https://tierlist-maker-gamma.vercel.app/",
+        "description": "Editor tier list berbasis gambar: upload gambar, atur baris dan peringkat lewat drag atau sentuhan, ubah tema canvas, lalu download hasilnya.",
+        "problem": "Pembuatan bagan peringkat (tier list) seringkali lambat di mobile dan memerlukan proses crop gambar manual yang tidak ramah pengguna.",
+        "exploration": "Optimalisasi penanganan drag-and-drop murni berpadu rendering grid dinamis berbasis HTML Canvas untuk ekspor cepat.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "Tailwind CSS",
+          "html2canvas"
+        ],
+        "summary": "Susun gambar ke tier list, atur peringkat, lalu ekspor hasil visual.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/tierlist-maker.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "anime-quote",
+        "name": "Anime Quote",
+        "category": "Utilities",
+        "url": "https://anime-quote-six.vercel.app/",
+        "description": "Editor kartu kutipan anime dengan pilihan karakter, teks, dan tampilan, serta unduhan hasil visual ke PNG.",
+        "problem": "Kutipan anime inspiratif tersebar secara acak di internet tanpa format visual yang layak dibagikan ke media sosial.",
+        "exploration": "Eksperimen integrasi API katalog kutipan anime dipadu filter sentimen emosi dan rendering kartu visual menggunakan kanvas modern.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "React",
+          "CSS",
+          "PNG Export"
+        ],
+        "summary": "Merangkai kutipan dan karakter anime menjadi kartu gambar.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/anime-quote.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "analisis-tanaman",
+        "name": "Analisis Tanaman",
+        "category": "AI Tools",
+        "url": "https://analyze-tanaman.vercel.app/welcome",
+        "description": "Flora.AI menampilkan alur identifikasi penyakit daun melalui Gemini AI, dukungan beberapa tanaman, ekspor laporan PDF, dan riwayat diagnosis. Halaman saat diperiksa juga menampilkan pemberitahuan pemeliharaan.",
+        "problem": "Mendiagnosis hama tanaman atau penyakit tanaman membutuhkan waktu lama dan ahli agronomi, menyebabkan keterlambatan penanganan di lahan.",
+        "exploration": "Mengintegrasikan penangkapan kamera ponsel secara langsung ke model multi-modal vision jarak jauh untuk analisis visual instan di lapangan.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "Tailwind CSS",
+          "Gemini AI",
+          "Vercel API"
+        ],
+        "summary": "Antarmuka analisis penyakit daun, laporan PDF, dan riwayat diagnosis.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/analisis-tanaman.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "hd-upscale",
+        "name": "HD Upscale",
+        "category": "AI Tools",
+        "url": "https://hd-upscale-nine.vercel.app/",
+        "description": "Spark Upscaler menyediakan upload JPG, PNG, atau WebP hingga 10 MB, pilihan resolusi output 4K/6K/8K, opsi face enhance, perbandingan hasil, dan download gambar.",
+        "problem": "Skala pembesaran gambar konvensional hanya merenggangkan grid pixel, menciptakan kekaburan visual dan noise yang merusak estetika desain grafik.",
+        "exploration": "Eksplorasi kalkulasi sintetik detail frekuensi tinggi lewat neural-network vision AI ketimbang sekadar interpolasi bilinear.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "Tailwind CSS",
+          "REST API"
+        ],
+        "summary": "Upload gambar, pilih resolusi dan face enhance, lalu unduh hasil upscale.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/hd-upscale.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "fake-loby-ml",
+        "name": "Fake Loby ML",
+        "category": "Utilities",
+        "url": "https://fake-loby-ml-nine.vercel.app/",
+        "description": "Generator kartu lobi Mobile Legends fiktif dengan input nama player, pilihan rank dan border, preview canvas, serta unduhan gambar.",
+        "problem": "Membuat visualisasi kartu profil game secara kustom dengan lencana tier dinamis membutuhkan keterampilan desain grafis yang rumit.",
+        "exploration": "Penerapan rendering canvas 2D untuk mengombinasikan berkas grafis skin, lencana, teks dinamis, dan parameter secara real-time.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "HTML Canvas",
+          "Tailwind CSS"
+        ],
+        "summary": "Buat kartu lobi ML fiktif dengan nama, rank, dan border pilihan.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/fake-loby-ml.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "tugasku-pro",
+        "name": "TugasKu Pro",
+        "category": "Productivity",
+        "url": "https://tugas-ku4.vercel.app/",
+        "description": "Eksperimen workspace untuk mengatur tugas, papan proyek, dan alur kerja personal.",
+        "problem": "Kebanyakan pengatur tugas terlalu kaku atau minim umpan balik visual, membuat pelacakan efisiensi tim terasa membosankan dan lambat.",
+        "exploration": "Riset interaksi drag-and-drop state boards, workspace dinamis, sistem sub-checklist bersarang, dan indikator produktivitas real-time.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "Next.js",
+          "React",
+          "Tailwind CSS",
+          "Zustand",
+          "Framer Motion"
+        ],
+        "summary": "Eksperimen workspace untuk mengatur tugas, papan proyek, dan alur kerja personal.",
+        "status": "ARCHIVED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/tugasku-pro.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "tugasku-lite",
+        "name": "TugasKu Lite",
+        "category": "Productivity",
+        "url": "https://tugasku3-lite.netlify.app/",
+        "description": "Pengelola tugas sekolah dengan deadline, prioritas, filter status, jadwal pelajaran mingguan, catatan, dan pilihan tema. Data tersimpan di browser melalui localStorage.",
+        "problem": "Aplikasi pelacak tugas sering kali lamban dan memakan memori berlebih saat dibuka pada jaringan lambat atau terminal smartphone.",
+        "exploration": "Optimasi berat runtime browser sekecil mungkin dan penyimpanan tumpukan status lokal yang tangguh terhadap fluktuasi sinyal internet.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "localStorage",
+          "Chart.js"
+        ],
+        "summary": "Tugas sekolah, jadwal pelajaran, dan catatan dengan penyimpanan lokal.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/tugasku-lite.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "screenshot-web",
+        "name": "Screenshot Web",
+        "category": "Utilities",
+        "url": "https://screenshot-web-omega.vercel.app/",
+        "description": "Tool capture website dari URL dengan preset viewport mobile hingga PC 4K, ukuran custom, render scale 1x–3x, pilihan full page, preview, dan download gambar.",
+        "problem": "Ekstensi screenshot biasa sering kali memecah font khusus, merusak posisi elemen CSS absolut, dan gagal menangkap layout gulir penuh.",
+        "exploration": "Membangun proxy server instansi Chromium tanpa kepala (headless) untuk merender animasi dan mengekstrak snapshot visual akurat.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "CSS",
+          "REST API"
+        ],
+        "summary": "Capture halaman web dengan ukuran viewport dan skala render pilihan.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/screenshot-web.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "cek-kartu",
+        "name": "Cek Kartu",
+        "category": "Utilities",
+        "url": "https://cek-provider-six.vercel.app/",
+        "description": "DOMPUL CEK adalah antarmuka pengecekan kartu XL dan AXIS. Nomor diproses lewat API untuk menampilkan status kartu, pulsa, masa aktif, masa tenggang, dan paket yang sedang aktif.",
+        "problem": "Kesalahan pengenalan nomor seluler oleh pengguna saat pengisian pulsa menimbulkan kekacauan sistem pengiriman transaksi lokal.",
+        "exploration": "Membangun mesin ekspresi reguler (RegEx) berkinerja tinggi terhadap dataset awalan nomor handphone dari seluruh operator lokal.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "REST API"
+        ],
+        "summary": "Cek informasi kartu XL/AXIS: pulsa, masa aktif, dan paket.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/cek-kartu.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "indosawit-news",
+        "name": "Indosawit.News v2",
+        "category": "Productivity",
+        "url": "https://nexssuspage.vercel.app",
+        "description": "Halaman penghubung IndoSawit.news dan Sanexus.ai: portal informasi berita nasional/global serta jalur ke layanan deep search AI untuk riset pasar dan konteks berita.",
+        "problem": "Petani kelapa sawit mandiri kesulitan mendapatkan transparansi riwayat pasar harga harian dan info pencegahan penyakit tanaman perkebunan.",
+        "exploration": "Agregasi data harian harga minyak sawit mentah (CPO) nasional dalam kemasan grafik kontras tinggi yang mudah dibaca di luar ruangan.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "JavaScript",
+          "Tailwind CSS"
+        ],
+        "summary": "Portal penghubung berita IndoSawit.news dan riset Sanexus.ai.",
+        "status": "ONLINE_UNVERIFIED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/indosawit-news.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "image-to-prompt",
+        "name": "Image To Prompt",
+        "category": "AI Tools",
+        "url": "https://image-to-promt-livid.vercel.app/",
+        "description": "Eksplorasi model vision untuk menerjemahkan gambar menjadi deskripsi atau prompt.",
+        "problem": "Melihat visualisasi yang menawan tetapi kesulitan menemukannya dalam struktur teks deskripsi presisi saat membuat instruksi di Midjourney atau Stable Diffusion.",
+        "exploration": "Pemurnian pipeline sintaks deskripsi warna, gaya arsitektur, pencahayaan, dan atmosfir estetis gambar menjadi format instruksi deklaratif.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "Gemini 2.5 Vision",
+          "React",
+          "Tailwind CSS",
+          "Node.js"
+        ],
+        "summary": "Eksplorasi model vision untuk menerjemahkan gambar menjadi deskripsi atau prompt.",
+        "status": "ARCHIVED",
+        "type": "work",
+        "visualType": "illustrative",
+        "image": "/components/works/image-to-prompt.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "quickfake",
+        "name": "QuickFake",
+        "category": "Archive Experiments",
+        "url": "",
+        "description": "Eksperimen data REST API tiruan untuk membantu pengembangan prototipe frontend.",
+        "problem": "Menunggu infrastruktur backend selesai dideploy menghambat kecepatan pengembangan antarmuka pengembang.",
+        "exploration": "Pemetaan data skema ke memori lokal untuk menyimulasikan transaksi fiktif dengan kecepatan latensi yang dapat dikontrol.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "Faker.js",
+          "ZustandKey",
+          "TypeScript"
+        ],
+        "summary": "Eksperimen data REST API tiruan untuk membantu pengembangan prototipe frontend.",
+        "status": "ARCHIVED",
+        "type": "experiment",
+        "visualType": "illustrative",
+        "image": "/components/works/quickfake.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "soundify",
+        "name": "Soundify",
+        "category": "Archive Experiments",
+        "url": "",
+        "description": "Eksplorasi Web Audio API, osilator, dan visualisasi suara langsung di browser.",
+        "problem": "Perangkat lunak pembuat audio terlampau rumit dan mengintimidasi bagi pengguna awam yang ingin mempelajari akustik digital.",
+        "exploration": "Memanfaatkan antarmuka Web Audio API osilator kustom berpadu dengan lukisan partikel canvas bergerak.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "Web Audio API",
+          "HTML5 Canvas",
+          "Tailwind CSS"
+        ],
+        "summary": "Eksplorasi Web Audio API, osilator, dan visualisasi suara langsung di browser.",
+        "status": "ARCHIVED",
+        "type": "experiment",
+        "visualType": "illustrative",
+        "image": "/components/works/soundify.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      },
+      {
+        "id": "web-anime",
+        "name": "Web Anime",
+        "category": "Archive Experiments",
+        "url": "",
+        "description": "Eksperimen katalog anime dan interaksi visual menggunakan transformasi CSS.",
+        "problem": "Banya visual web terasa kaku dan patah-patah karena animasi javascript berat yang tidak mengakses akselerasi perangkat keras.",
+        "exploration": "Penerapan transformasi koordinat matrix CSS 3D berakselerasi fisik untuk rotasi visual halus.",
+        "outcome": "Tercatat sebagai bagian dari arsip eksplorasi pribadi. Ketersediaan demo dan hasil eksperimen saat ini belum dikonfirmasi.",
+        "ecosystem": [
+          "CSS Transforms",
+          "React",
+          "Framer Motion"
+        ],
+        "summary": "Eksperimen katalog anime dan interaksi visual menggunakan transformasi CSS.",
+        "status": "ARCHIVED",
+        "type": "experiment",
+        "visualType": "illustrative",
+        "image": "/components/works/web-anime.svg",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%"
+      }
+    ]
+  },
+  "journey": {
+    "chapterTitle": "THE EVOLUTION / 6 CHAPTERS",
+    "headingLine1": "Dari rasa penasaran.",
+    "headingItalic": "Menuju kemandirian.",
+    "intro": "Pilih titik perjalanan untuk membuka konteksnya.\nDari pasca-pondok 2025 hingga visi produk digital berkelanjutan.",
+    "deviceNote": "LAPTOP & OS / AWAL 2025",
+    "terminalLines": [
+      "const growth = true;",
+      "while (growth) {",
+      "  research();",
+      "  build();",
+      "  automate();",
+      "}"
+    ],
+    "steps": [
+      {
+        "phase": "Chapter 01 — Awal 2025",
+        "title": "Eksplorasi Sistem & Fundamental Koding",
+        "subtitle": "Transisi Pasca-Lulus Pondok & Fondasi Teknis",
+        "description": "Titik balik serius dimulai tepat setelah lulus dari pondok pesantren di awal 2025. Berbekal rasa penasaran masa kecil terhadap hardware dan inspirasi serial Mr. Robot, aku mulai mengulik sistem operasi menggunakan laptop mandiri, mempelajari logika pemrograman dasar, serta membangun antarmuka web statis pertama dari nol.",
+        "techKeywords": [
+          "OS & Hardware",
+          "HTML / CSS / JS",
+          "Programming Logic",
+          "Static Web"
+        ],
+        "environment": {
+          "device": "Laptop Mandiri & Linux / OS",
+          "laptop": "Daily Driver",
+          "learning": "Research-First & Self-Taught"
+        }
+      },
+      {
+        "phase": "Chapter 02 — 2025",
+        "title": "Proyek Pertama: Web AI Chat Berbasis API",
+        "subtitle": "Integrasi Web dengan Layanan Kecerdasan Buatan",
+        "description": "Melangkah dari halaman statis menuju aplikasi dinamis dengan membangun aplikasi web obrolan mandiri yang terhubung langsung ke API Gemini. Proyek ini menjadi pembuktian pertama bagaimana antarmuka web modern dapat berinteraksi secara real-time dengan model AI generatif.",
+        "techKeywords": [
+          "Gemini API",
+          "Web AI Chat",
+          "REST Integration",
+          "Async UI"
+        ]
+      },
+      {
+        "phase": "Chapter 03 — Akhir 2025 – 2026",
+        "title": "Adopsi Gelombang AI & Efisiensi Workflow",
+        "subtitle": "Akselerasi Pembuatan Perangkat Lunak",
+        "description": "Mengintegrasikan berbagai instrumen AI modern ke dalam alur kerja harian. AI tidak dipakai sekadar menyalin kode, melainkan sebagai mitra riset cepat, pemecahan masalah kompleks, penyusunan arsitektur perangkat lunak mandiri, dan validasi struktur sebelum eksekusi.",
+        "techKeywords": [
+          "AI-Accelerated Workflow",
+          "System Architecture",
+          "Deep Research",
+          "Rapid Prototyping"
+        ]
+      },
+      {
+        "phase": "Chapter 04 — Sekarang",
+        "title": "Fase Saat Ini: Pengembangan Aplikasi & Otomasi Bot",
+        "subtitle": "Fokus pada Solusi Terapan & Sistem Otomatis",
+        "description": "Aktif membangun aplikasi multi-platform, antarmuka web interaktif, serta merancang bot otomatisasi WhatsApp & Telegram dengan integrasi AI Agent yang terarah. Di saat yang sama turut memperdalam desain branding dan analisis pasar finansial (financial market analysis).",
+        "techKeywords": [
+          "AI Agents",
+          "WA & Telegram Bots",
+          "Multi-Platform App",
+          "Market Analysis"
+        ]
+      },
+      {
+        "phase": "Chapter 05 — Target Jangka Pendek",
+        "title": "Peluncuran Produk & Monetisasi Sistem",
+        "subtitle": "Transisi dari Eksperimen ke Nilai Guna Nyata",
+        "description": "Mempersiapkan peluncuran aplikasi fungsional yang siap digunakan publik secara luas, merilis sistem automasi AI terapan untuk end-user maupun kebutuhan bisnis, serta menguji dan memvalidasi model monetisasi produk pertama secara terukur.",
+        "techKeywords": [
+          "Public Launch",
+          "End-User AI Automation",
+          "Brand Identity",
+          "Monetization"
+        ]
+      },
+      {
+        "phase": "Chapter 06 — Visi Jangka Panjang",
+        "title": "Kemandirian Finansial & Produk Digital Berkelanjutan",
+        "subtitle": "Membangun Ekosistem Bisnis & Infrastruktur Mandiri",
+        "description": "Mewujudkan kemandirian finansial melalui ekosistem produk digital dan infrastruktur teknologi yang dikelola secara independen—menghasilkan arus pendapatan berkelanjutan sekaligus memberikan dampak fungsional yang nyata bagi pengguna.",
+        "techKeywords": [
+          "Financial Independence",
+          "Sustainable SaaS",
+          "Digital Ecosystem",
+          "Long-Term Impact"
+        ]
+      }
+    ]
+  },
+  "ecosystem": {
+    "chapterTitle": "UNDER THE GLASS / STACK & TOOLS",
+    "headingLine1": "Different tools.",
+    "headingItalic": "Terus dieksplorasi.",
+    "intro": "Setiap instrumen dipilih berdasarkan relevansi dan efisiensinya dalam alur kerja — mulai dari penalaran AI, arsitektur aplikasi, hingga infrastruktur deployment.",
+    "githubUrl": "https://github.com/MRNODATAX",
+    "githubLabel": "SOURCE / NO_DATA",
+    "stack": [
+      {
+        "name": "React",
+        "icon": "react",
+        "role": "INTERFACE",
+        "detail": "Komponen, state interaksi, dan antarmuka portofolio reaktif."
+      },
+      {
+        "name": "Vite",
+        "icon": "vite",
+        "role": "BUILD",
+        "detail": "Build produksi berkecepatan tinggi, bundling modul, dan pemrosesan aset."
+      },
+      {
+        "name": "TypeScript",
+        "icon": "typescript",
+        "role": "TYPES",
+        "detail": "Keamanan tipe untuk komponen, arsitektur data CMS, dan interaksi UI."
+      },
+      {
+        "name": "CSS + SVG",
+        "icon": null,
+        "role": "MOTION",
+        "detail": "Perspektif 3D, material kaca, koreografi scroll, dan jalur orbit ringan tanpa WebGL."
+      },
+      {
+        "name": "Upstash",
+        "icon": "upstash",
+        "role": "STORAGE",
+        "detail": "Redis melalui REST (dengan sinkronisasi lokal) untuk data CMS & rating pengunjung."
+      },
+      {
+        "name": "Node.js",
+        "icon": "nodedotjs",
+        "role": "FUNCTIONS",
+        "detail": "Fungsi serverless untuk endpoint CMS Admin, Relay AI, rating, dan automasi bot."
+      },
+      {
+        "name": "Vercel",
+        "icon": "vercel",
+        "role": "DEPLOY",
+        "detail": "Target deployment instan untuk frontend statis dan serverless API."
+      },
+      {
+        "name": "REST API",
+        "icon": null,
+        "role": "RELAY",
+        "detail": "Integrasi fetch ke endpoint AI, Gemini API, serta webhook layanan eksternal."
+      }
+    ],
+    "groups": [
+      {
+        "category": "AI Tools",
+        "items": [
+          {
+            "name": "ChatGPT",
+            "description": "Diskusi konsep, pemecahan masalah, dan meninjau penalaran.",
+            "iconName": "MessageSquareCode"
+          },
+          {
+            "name": "Claude",
+            "description": "Membaca kode, mendiskusikan arsitektur, dan merapikan struktur.",
+            "iconName": "Workflow"
+          },
+          {
+            "name": "Gemini",
+            "description": "Eksplorasi model multimodal dan pemahaman gambar.",
+            "iconName": "Sparkles"
+          },
+          {
+            "name": "DeepSeek",
+            "description": "Eksperimen penalaran logika dan bantuan pemrograman.",
+            "iconName": "Brain"
+          },
+          {
+            "name": "Kimi",
+            "description": "Membaca dokumen panjang dan merangkum informasi.",
+            "iconName": "FileSpreadsheet"
+          },
+          {
+            "name": "Zhipu AI",
+            "description": "Eksplorasi model bahasa dan pemrosesan teks.",
+            "iconName": "Sparkles"
+          }
+        ]
+      },
+      {
+        "category": "Builders",
+        "items": [
+          {
+            "name": "Copilot",
+            "description": "Bantuan menulis kode langsung di editor.",
+            "iconName": "Terminal"
+          },
+          {
+            "name": "Codex",
+            "description": "Mengeksplorasi alur kerja coding bersama AI.",
+            "iconName": "Code"
+          },
+          {
+            "name": "Lovable",
+            "description": "Merakit prototipe antarmuka dari ide awal.",
+            "iconName": "Layout"
+          },
+          {
+            "name": "v0",
+            "description": "Eksplorasi desain dan komponen antarmuka.",
+            "iconName": "Layers"
+          },
+          {
+            "name": "Google AI Studio",
+            "description": "Mencoba model serta parameter API Google.",
+            "iconName": "Cpu"
+          },
+          {
+            "name": "Devin",
+            "description": "Eksplorasi alur kerja agen pemrograman.",
+            "iconName": "Binary"
+          }
+        ]
+      },
+      {
+        "category": "Infrastructure",
+        "items": [
+          {
+            "name": "Railway",
+            "description": "Eksperimen deployment aplikasi dan layanan server.",
+            "iconName": "Cloud"
+          },
+          {
+            "name": "Supabase",
+            "description": "Eksplorasi PostgreSQL dan fitur realtime.",
+            "iconName": "Database"
+          },
+          {
+            "name": "Netlify",
+            "description": "Hosting frontend dan distribusi aset statis.",
+            "iconName": "Globe"
+          },
+          {
+            "name": "Vercel",
+            "description": "Deployment website dari repository Git.",
+            "iconName": "Vercel"
+          }
+        ]
+      },
+      {
+        "category": "Environment",
+        "items": [
+          {
+            "name": "GitHub",
+            "description": "Menyimpan source dan melacak perubahan kode.",
+            "iconName": "Github"
+          },
+          {
+            "name": "Termux",
+            "description": "Terminal Linux sebagai ruang kerja di perangkat Android.",
+            "iconName": "Command"
+          },
+          {
+            "name": "Reqable",
+            "description": "Memeriksa request dan respons layanan API.",
+            "iconName": "Activity"
+          }
+        ]
+      }
+    ]
+  },
+  "personal": {
+    "chapterTitle": "THE PERSONAL UNIVERSE",
+    "headingLine1": "My Waifu.",
+    "headingItalic": "A little more me.",
+    "intro": "Di sela koding dan riset pasar, aku juga menikmati cerita anime dengan karakter yang berkesan. Alya Kujou jadi favorit utama, bersama Miku Nakano dan Mahiru Shiina.",
+    "anime": [
+      {
+        "id": "alya",
+        "name": "Alya Kujou",
+        "origin": "Tokidoki Bosotto Russia-go de Dereru Tonari no Alya-san",
+        "label": "Silver-haired perfectionist",
+        "note": "Perfeksionis berambut perak yang cerdas, disiplin, dan kompetitif di luar — namun sesekali menyembunyikan sisi hangat dan jujurnya dalam bisikan bahasa Rusia.",
+        "image": "/images/anime-v22/alya.jpg",
+        "focal": "50% 18%",
+        "source": "https://roshidere.com/",
+        "color": "#b7c4d6"
+      },
+      {
+        "id": "miku",
+        "name": "Miku Nakano",
+        "origin": "Go-Toubun no Hanayome",
+        "label": "Quiet devotion",
+        "note": "Tenang, observan, dan selalu lekat dengan headphone birunya. Di balik sifat pemalunya, tersimpan ketekunan luar biasa saat memperjuangkan hal yang ia yakini.",
+        "image": "/images/anime-v22/miku.jpg",
+        "focal": "50% 20%",
+        "source": "https://www.tbs.co.jp/anime/5hanayome/",
+        "color": "#8fa9c9"
+      },
+      {
+        "id": "mahiru",
+        "name": "Mahiru Shiina",
+        "origin": "Otonari no Tenshi-sama",
+        "label": "Warm serenity",
+        "note": "Sosok anggun dan tulus yang membawa ketenangan lewat perhatian pada detail-detail sederhana di keseharian — hangat tanpa perlu banyak bicara.",
+        "image": "/images/anime-v22/mahiru.jpg",
+        "focal": "50% 16%",
+        "source": "https://otonarino-tenshisama.jp/",
+        "color": "#d4b996"
+      }
+    ],
+    "video": {
+      "url": "https://res.cloudinary.com/dhxfke7kq/video/upload/v1791439342/Ssstt/wnudrzps2bdshrcyykkw.mp4",
+      "poster": "/posters/cote.webp",
+      "rotation": -90,
+      "title": "Classroom of the Elite"
+    },
+    "royal": {
+      "eyebrow": "CLASSROOM OF THE ELITE",
+      "titleFirst": "Kings",
+      "titleAmp": "&",
+      "titleSecond": "Queen.",
+      "caption": "Ayanokouji × Arisu Sakayanagi.\nDua cara berpikir, satu permainan yang belum selesai.",
+      "image": "/images/anime-v22/duo.jpg"
+    }
+  },
+  "relay": {
+    "chapterTitle": "RELAY / A PERSONAL CONNECTION",
+    "headingLine1": "A different way",
+    "headingItalic": "say hello.",
+    "intro": "Kenalan lewat percakapan. Tanyakan tentang perjalanan, karya, cara kerja bersama AI, atau kontak publik No_Data.",
+    "welcomeTitle": "Rasa penasaranmu\nboleh mulai di sini.",
+    "welcomeSub": "Aku Relay, representasi AI No_Data.\nMau tahu tentang karya, workflow, atau perjalanan?",
+    "prompts": [
+      "Bagaimana awal perjalananmu pasca-pondok?",
+      "Proyek AI Agent & Bot apa yang sedang dibangun?",
+      "Bagaimana cara menghubungi No_Data?"
+    ],
+    "customKnowledge": ""
+  },
+  "ethos": {
+    "chapterTitle": "THE ETHOS",
+    "eyebrow": "A NOTE TO MYSELF",
+    "quoteLine1": "Tidak ada batasan apa pun",
+    "quotePrefix": "untuk terus",
+    "quoteItalic": "berkembang.",
+    "body": "Tidak ada batasan apa pun untuk terus berkembang. Dari rasa penasaran masa kecil hingga disiplin belajar pasca-pondok, setiap baris kode, riset sistem, dan eksperimen AI adalah pijakan menuju produk digital yang mandiri dan berdampak nyata."
+  },
+  "footer": {
+    "eyebrow": "IDE, PERTANYAAN, ATAU SEKADAR MENYAPA?",
+    "headingLine1": "Let’s start",
+    "headingItalic": "a conversation.",
+    "primaryContactUrl": "https://wa.me/62881080593445",
+    "copyrightName": "Rahman Zuhri / NODATA OFFICIAL.",
+    "copyrightNote": "Catatan proyek dan proses berkembang.",
+    "socials": [
+      {
+        "name": "WhatsApp",
+        "handle": "0881-0805-93445",
+        "url": "https://wa.me/62881080593445"
+      },
+      {
+        "name": "Instagram",
+        "handle": "@nodatanotdev",
+        "url": "https://www.instagram.com/nodatanotdev"
+      },
+      {
+        "name": "GitHub",
+        "handle": "MRNODATAX",
+        "url": "https://github.com/MRNODATAX"
+      }
+    ]
+  },
+  "certificates": {
+    "chapterTitle": "CERTIFICATES & APPRECIATION",
+    "headingLine1": "Verified milestones.",
+    "headingItalic": "Sertifikat & apresiasi.",
+    "intro": "Koleksi sertifikat kompetensi dan apresiasi pelaporan keamanan etis (responsible disclosure) yang mendukung keahlian di bidang AI, cyber security, dan pengembangan aplikasi.",
+    "subHeading": "Credential index.",
+    "subNote": "AI • CYBER SECURITY (CSIRT) • ANDROID DEVELOPMENT",
+    "items": [
+      {
+        "id": "cert-01-it-specialist-ai",
+        "title": "IT Specialist: Artificial Intelligence",
+        "issuer": "Certiport • CertNexus • Pearson VUE",
+        "date": "16 Desember 2025",
+        "badge": "AI Certification",
+        "description": "Sertifikasi Artificial Intelligence dari Certiport/CertNexus/Pearson yang menunjukkan pemahaman dasar AI, konsep machine learning, dan penerapan teknologi kecerdasan buatan.",
+        "image": "https://nodataofficialstore.vercel.app/assets/images/certificate-01-it-specialist-ai.webp",
+        "fallbackImage": "/images/certificates/cert-01.svg",
+        "credentialUrl": "https://nodataofficialstore.vercel.app/assets/images/certificate-01-it-specialist-ai.webp"
+      },
+      {
+        "id": "cert-02-kominfo-csirt",
+        "title": "KOMINFO-CSIRT Responsible Disclosure",
+        "issuer": "KOMINFO-CSIRT",
+        "date": "8 Maret 2023",
+        "badge": "SQL Injection",
+        "description": "Sertifikat apresiasi dari KOMINFO-CSIRT atas kontribusi etis dalam koordinasi temuan kerentanan SQL Injection dan pelaporan responsible disclosure.",
+        "image": "https://nodataofficialstore.vercel.app/assets/images/certificate-02-kominfo-csirt-sqli.webp",
+        "fallbackImage": "/images/certificates/cert-02.svg",
+        "credentialUrl": "https://nodataofficialstore.vercel.app/assets/images/certificate-02-kominfo-csirt-sqli.webp"
+      },
+      {
+        "id": "cert-03-bmkg-csirt",
+        "title": "BMKG-CSIRT Vulnerability Report",
+        "issuer": "BMKG-CSIRT",
+        "date": "2 April 2026",
+        "badge": "Responsible Report",
+        "description": "Sertifikat apresiasi dari BMKG-CSIRT atas koordinasi temuan kerentanan dan pelaporan secara etis kepada pihak terkait.",
+        "image": "https://nodataofficialstore.vercel.app/assets/images/certificate-03-bmkg-csirt.webp",
+        "fallbackImage": "/images/certificates/cert-03.svg",
+        "credentialUrl": "https://nodataofficialstore.vercel.app/assets/images/certificate-03-bmkg-csirt.webp"
+      },
+      {
+        "id": "cert-04-baliklayar-idor",
+        "title": "BalikLayar.id Responsible Disclosure",
+        "issuer": "BalikLayar.id",
+        "date": "16 Juni 2026",
+        "badge": "IDOR Resolved",
+        "description": "Sertifikat apresiasi responsible disclosure dari BalikLayar.id atas pelaporan kerentanan Public Cloud Storage Object Exposure/IDOR hingga status resolved.",
+        "image": "https://nodataofficialstore.vercel.app/assets/images/certificate-04-baliklayar-responsible-disclosure.webp",
+        "fallbackImage": "/images/certificates/cert-04.svg",
+        "credentialUrl": "https://nodataofficialstore.vercel.app/assets/images/certificate-04-baliklayar-responsible-disclosure.webp"
+      },
+      {
+        "id": "cert-05-google-android",
+        "title": "Google Associate Android Developer",
+        "issuer": "Google Developers",
+        "date": "1 Februari 2026",
+        "badge": "Android Developer",
+        "description": "Sertifikasi Google Associate Android Developer yang menunjukkan kompetensi pengembangan aplikasi Android berbasis Java dan standar Google Developers.",
+        "image": "https://nodataofficialstore.vercel.app/assets/images/certificate-05-google-android-developer.webp",
+        "fallbackImage": "/images/certificates/cert-05.svg",
+        "credentialUrl": "https://nodataofficialstore.vercel.app/assets/images/certificate-05-google-android-developer.webp"
+      }
+    ]
+  }
+}
