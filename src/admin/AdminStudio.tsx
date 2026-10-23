@@ -6,11 +6,14 @@ import {
   Award,
   Check,
   Copy,
+  AlertTriangle,
+  Database,
   Download,
   Eye,
   EyeOff,
   FolderKanban,
   Heart,
+  History,
   KeyRound,
   Layers,
   Zap,
@@ -49,6 +52,8 @@ import ImageField from './ImageField';
 import VideoField from './VideoField';
 
 type AdminTab = 'identity' | 'projects' | 'about' | 'journey' | 'ecosystem' | 'personal' | 'certificates' | 'relay' | 'footer';
+
+const DRAFT_BACKUP_KEY = 'nodata-admin-draft-v1';
 
 interface AdminReview {
   id: string;
@@ -107,6 +112,8 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
   const [keyBusy, setKeyBusy] = useState<'save' | 'test' | 'delete' | ''>('');
   const [keyMsg, setKeyMsg] = useState('');
   const [keyErr, setKeyErr] = useState('');
+  const [draftBackup, setDraftBackup] = useState<{ at: number } | null>(null);
+  const [showStorageHelp, setShowStorageHelp] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -114,6 +121,36 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
       setDraft(structuredClone(siteData));
     }
   }, [siteData]);
+
+  // Simpan salinan draf di browser (debounce 2 detik) supaya perubahan tidak hilang
+  // bila serverless keburu di-recycle sebelum sempat disimpan.
+  useEffect(() => {
+    if (!dirty) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_BACKUP_KEY, JSON.stringify({ at: Date.now(), data: draft }));
+      } catch {
+        // localStorage penuh / tidak tersedia — lewati tanpa mengganggu editor.
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [draft, dirty]);
+
+  // Deteksi cadangan draf dari sesi sebelumnya.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_BACKUP_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.data?.identity && Array.isArray(parsed?.data?.archive?.projects)) {
+        setDraftBackup({ at: Number(parsed.at) || Date.now() });
+      } else {
+        localStorage.removeItem(DRAFT_BACKUP_KEY);
+      }
+    } catch {
+      // Abaikan bila tidak bisa dibaca.
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -390,15 +427,19 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
       setDraft(structuredClone(body.data as SiteData));
       setDirty(false);
       if (body.persistedTo) setStorageMode(body.persistedTo);
+      const where =
+        body.persistedTo === 'supabase'
+          ? 'Tersimpan permanen di Supabase Cloud DB'
+          : body.persistedTo === 'upstash'
+            ? 'Tersimpan permanen di Upstash Redis Cloud'
+            : body.persistedTo === 'filesystem'
+              ? 'Tersimpan permanen ke file shared/site-data.json'
+              : '⚠️ Tersimpan SEMENTARA di memori server — akan hilang bila instance di-recycle/redeploy';
       setToast({
-        text: `Perubahan berhasil disimpan (${
-          body.persistedTo === 'filesystem'
-            ? 'Tersimpan ke file JSON lokal'
-            : body.persistedTo === 'upstash'
-            ? 'Tersimpan ke Upstash Redis Cloud'
-            : 'Tersimpan di memori aktif'
-        }).`,
+        text: `Perubahan berhasil disimpan. ${where}.`,
+        isError: body.persistedTo === 'memory',
       });
+      clearDraftBackup();
     } catch (err) {
       setToast({ text: err instanceof Error ? err.message : 'Gagal menyimpan.', isError: true });
     } finally {
@@ -426,6 +467,34 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
     a.download = `nodata-site-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  /* ── Penyelamatan draf: simpan salinan ke browser bila server bersifat sementara ── */
+  function clearDraftBackup() {
+    try {
+      localStorage.removeItem(DRAFT_BACKUP_KEY);
+    } catch {
+      // localStorage bisa tidak tersedia — abaikan.
+    }
+    setDraftBackup(null);
+  }
+
+  function restoreDraftBackup() {
+    try {
+      const raw = localStorage.getItem(DRAFT_BACKUP_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.data?.identity || !Array.isArray(parsed?.data?.archive?.projects)) {
+        throw new Error('Rusak');
+      }
+      setDraft(parsed.data as SiteData);
+      setDirty(true);
+      clearDraftBackup();
+      setToast({ text: 'Draf terakhir berhasil dipulihkan. Klik "Simpan Perubahan" untuk menerapkan.' });
+    } catch {
+      clearDraftBackup();
+      setToast({ text: 'Cadangan draf tidak bisa dibaca dan sudah dibuang.', isError: true });
+    }
   }
 
   function importJson(file: File) {
@@ -734,6 +803,83 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
         </aside>
 
         <main className="admin-main">
+          {storageMode === 'memory' && (
+            <div className="admin-warning" role="alert">
+              <strong>
+                <AlertTriangle size={15} /> Mode penyimpanan SEMENTARA — perubahan bisa hilang
+              </strong>
+              <p>
+                Website ini sedang berjalan <b>tanpa database</b> (mode memori serverless). Semua yang Anda simpan —
+                termasuk <b>foto &amp; video yang di-upload</b> — hanya bertahan selama instance server masih hidup,
+                lalu <b>kembali ke data awal</b> (biasanya beberapa menit setelah tidak ada aktivitas atau setiap kali
+                redeploy).
+              </p>
+              <div className="admin-warning-actions">
+                <button type="button" className="admin-btn admin-btn-sm" onClick={exportJson}>
+                  <Download size={14} />
+                  Backup JSON sekarang
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-sm"
+                  onClick={() => setShowStorageHelp((v) => !v)}
+                  aria-expanded={showStorageHelp}
+                >
+                  <Database size={14} />
+                  {showStorageHelp ? 'Sembunyikan panduan' : 'Cara mengaktifkan penyimpanan permanen'}
+                </button>
+              </div>
+              {showStorageHelp && (
+                <ol className="admin-warning-steps">
+                  <li>
+                    Buat project gratis di <b>supabase.com</b> → buka <b>SQL Editor</b> → jalankan seluruh isi file{' '}
+                    <code>supabase/schema.sql</code> dari repositori ini (membuat tabel <code>site_cms</code>,{' '}
+                    <code>site_secrets</code>, <code>visitor_reviews</code> + bucket <code>portfolio-assets</code>).
+                  </li>
+                  <li>
+                    Di Supabase: <b>Project Settings → API</b> → salin <b>Project URL</b> dan{' '}
+                    <b>service_role key</b>.
+                  </li>
+                  <li>
+                    Di Vercel: <b>Project → Settings → Environment Variables</b> → tambah{' '}
+                    <code>SUPABASE_URL</code> dan <code>SUPABASE_SERVICE_ROLE_KEY</code>.
+                  </li>
+                  <li>
+                    <b>Deployments → Redeploy</b>. Setelah itu badge atas berubah menjadi{' '}
+                    <i>“Supabase Cloud DB + Storage”</i> dan semua perubahan tersimpan permanen.
+                  </li>
+                  <li>
+                    Alternatif tanpa SQL: pakai <b>Upstash Redis</b> lewat <code>UPSTASH_REDIS_REST_URL</code> +{' '}
+                    <code>UPSTASH_REDIS_REST_TOKEN</code>.
+                  </li>
+                </ol>
+              )}
+            </div>
+          )}
+
+          {draftBackup && (
+            <div className="admin-warning admin-warning-info" role="status">
+              <strong>
+                <History size={15} /> Draf yang belum tersimpan ditemukan
+              </strong>
+              <p>
+                Ada perubahan dari sesi sebelumnya ({' '}
+                {new Date(draftBackup.at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}).
+                Pulihkan ke editor lalu simpan, atau buang bila sudah tidak diperlukan.
+              </p>
+              <div className="admin-warning-actions">
+                <button type="button" className="admin-btn admin-btn-sm" onClick={restoreDraftBackup}>
+                  <History size={14} />
+                  Pulihkan Draf
+                </button>
+                <button type="button" className="admin-btn admin-btn-sm" onClick={clearDraftBackup}>
+                  <Trash2 size={13} />
+                  Buang
+                </button>
+              </div>
+            </div>
+          )}
+
           {toast && (
             <div className={`admin-toast ${toast.isError ? 'error' : ''}`} role="status">
               <span>{toast.text}</span>
