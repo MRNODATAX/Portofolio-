@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sanitizeUrl, verifyImageMagicBytes } from './security.mjs';
+import { sanitizeUrl, verifyImageMagicBytes, verifyVideoMagicBytes } from './security.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SITE_DATA_PATH = join(__dirname, 'site-data.json');
@@ -159,6 +159,11 @@ export function sanitizeSiteDataUrls(candidate) {
     if (candidate.identity.heroStack?.workImage) {
       candidate.identity.heroStack.workImage = sanitizeUrl(candidate.identity.heroStack.workImage, { allowDataImage: true });
     }
+    if (Array.isArray(candidate.identity.heroCards)) {
+      for (const card of candidate.identity.heroCards) {
+        if (card?.image) card.image = sanitizeUrl(card.image, { allowDataImage: true });
+      }
+    }
   }
 
   if (Array.isArray(candidate.archive?.projects)) {
@@ -181,8 +186,17 @@ export function sanitizeSiteDataUrls(candidate) {
       candidate.personal.video.poster = sanitizeUrl(candidate.personal.video.poster, { allowDataImage: true });
     }
     if (candidate.personal.video.src) {
-      candidate.personal.video.src = sanitizeUrl(candidate.personal.video.src);
+      candidate.personal.video.src = sanitizeUrl(candidate.personal.video.src, { allowDataVideo: true });
     }
+    if (candidate.personal.video.url) {
+      candidate.personal.video.url = sanitizeUrl(candidate.personal.video.url, { allowDataVideo: true });
+    }
+    // Rotasi dibulatkan ke kelipatan 90° agar orientasi video selalu valid.
+    const rawRotation = Number(candidate.personal.video.rotation);
+    candidate.personal.video.rotation = Number.isFinite(rawRotation)
+      ? ((Math.round(rawRotation / 90) * 90) % 360 + 360) % 360
+      : 0;
+    candidate.personal.video.fit = candidate.personal.video.fit === 'contain' ? 'contain' : 'cover';
   }
 
   if (Array.isArray(candidate.certificates?.items)) {
@@ -209,6 +223,10 @@ export function normalizeSiteData(candidate) {
   if (!candidate || typeof candidate !== 'object') return candidate;
   if (!candidate.certificates || !Array.isArray(candidate.certificates.items)) {
     candidate.certificates = structuredClone(INITIAL_SEED.certificates);
+  }
+  // Migrasi: data lama yang belum punya kartu stack hero dinamis dibuatkan 3 kartu bawaan.
+  if (candidate.identity && !Array.isArray(candidate.identity.heroCards)) {
+    candidate.identity.heroCards = structuredClone(INITIAL_SEED.identity.heroCards);
   }
   return sanitizeSiteDataUrls(candidate);
 }
@@ -339,26 +357,41 @@ export async function saveSiteData(nextData) {
 }
 
 export async function saveUploadedAsset({ filename = 'image.webp', dataUrl = '' }) {
-  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
-    throw new Error('Format gambar tidak valid.');
+  if (typeof dataUrl !== 'string' || !/^data:(image|video)\//.test(dataUrl)) {
+    throw new Error('Format berkas tidak valid. Gunakan gambar (PNG/JPG/WebP/GIF) atau video (MP4/WebM).');
   }
-  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/);
+  const match = dataUrl.match(/^data:((?:image|video)\/[a-zA-Z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/);
   if (!match) {
-    throw new Error('Data gambar base64 tidak valid.');
+    throw new Error('Data base64 tidak valid.');
   }
   const declaredMime = match[1].toLowerCase();
+  const isVideo = declaredMime.startsWith('video/');
   if (declaredMime === 'image/svg+xml' || declaredMime.includes('svg')) {
     throw new Error('Demi keamanan (anti-XSS), unggahan file SVG tidak diizinkan. Gunakan PNG, JPG, atau WebP.');
   }
 
   const buffer = Buffer.from(match[2], 'base64');
-  if (buffer.byteLength > 4.5 * 1024 * 1024) {
-    throw new Error('Ukuran gambar maksimal 4.5 MB.');
+
+  // Vercel serverless functions cap the request body at ~4.5 MB, so direct video
+  // uploads only stay reliable below 4 MB. Anything bigger should be pushed to
+  // Supabase Storage / Cloudinary and referenced by URL.
+  const localFs = isFilesystemWritable();
+  const maxBytes = isVideo ? (localFs ? 64 * 1024 * 1024 : 4 * 1024 * 1024) : 4.5 * 1024 * 1024;
+  if (buffer.byteLength > maxBytes) {
+    throw new Error(
+      isVideo
+        ? `Ukuran video maksimal ${Math.floor(maxBytes / (1024 * 1024))} MB untuk upload langsung. Untuk video lebih besar, unggah ke Supabase Storage / Cloudinary lalu tempel URL-nya di kolom "URL Video MP4".`
+        : 'Ukuran gambar maksimal 4.5 MB.'
+    );
   }
 
-  const verified = verifyImageMagicBytes(buffer);
+  const verified = isVideo ? verifyVideoMagicBytes(buffer) : verifyImageMagicBytes(buffer);
   if (!verified) {
-    throw new Error('Header biner gambar tidak valid. Gunakan file PNG, JPG, WebP, atau GIF asli.');
+    throw new Error(
+      isVideo
+        ? 'Header biner video tidak valid. Gunakan file MP4 (.mp4) atau WebM (.webm) asli.'
+        : 'Header biner gambar tidak valid. Gunakan file PNG, JPG, WebP, atau GIF asli.'
+    );
   }
 
   const safeSlug =

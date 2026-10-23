@@ -8,7 +8,7 @@ function localApi(): Plugin {
     middlewares.use('/api', async (req: any, res: any, next: any) => {
       const route = req.url?.split('?')[0];
       if (!['/chat', '/health', '/ratings', '/content', '/admin'].includes(route || '')) return next();
-      const maxBytes = route === '/content' ? 8 * 1024 * 1024 : 50000;
+      const maxBytes = route === '/content' ? 64 * 1024 * 1024 : 50000;
       let raw = '';
       try {
         for await (const chunk of req) {

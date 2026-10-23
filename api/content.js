@@ -2,7 +2,9 @@ import { requireAdminAuth } from '../shared/auth.mjs';
 import { applyApiSecurityHeaders, isCrossSiteRequest, parseJsonBody } from '../shared/security.mjs';
 import { getSiteData, getStorageMode, saveSiteData, saveUploadedAsset } from '../shared/store.mjs';
 
-const MAX_CMS_BODY_BYTES = 7 * 1024 * 1024; // 7 MB max for base64 image upload
+const MAX_CMS_BODY_BYTES = 56 * 1024 * 1024; // base64 payload: images + (locally) video uploads.
+// Catatan: Vercel membatasi body serverless di ~4.5 MB, sehingga batas efektif di produksi
+// dijaga ulang oleh saveUploadedAsset() di shared/store.mjs (video > 4 MB disarankan via URL).
 
 export default async function handler(req, res) {
   applyApiSecurityHeaders(res);

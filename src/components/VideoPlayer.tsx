@@ -1,6 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
+
+/**
+ * The banner frame is a fixed 16:9 landscape window (see `.video-banner` in glass.css).
+ * A vertical (portrait) source clip has to be rotated by ±90° to fill that window, and
+ * when it is rotated its element box must be swapped as well — otherwise the picture
+ * ends up sideways AND cropped (the classic "video miring" bug).
+ *
+ * Frame is W x H (16:9). After a quarter turn the element's rendered width becomes its
+ * height, so the element must be H wide and W tall:
+ *   width  = (H / W) * 100% = 56.25%
+ *   height = (W / H) * 100% = 177.7778%
+ */
+const FRAME_RATIO = 16 / 9;
+
+function normalizeRotation(raw: unknown) {
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return 0;
+  return ((Math.round(value / 90) * 90) % 360 + 360) % 360; // -> 0 | 90 | 180 | 270
+}
 
 export default function VideoPlayer() {
   const { siteData } = useSiteData();
@@ -14,6 +33,25 @@ export default function VideoPlayer() {
   const [title, setTitle] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
+  const rotation = normalizeRotation(VIDEO?.rotation);
+  // Putaran seperempat (90° / 270°) berarti sumber video vertikal: kotak elemennya
+  // harus ditukar (lebar ↔ tinggi) supaya hasilnya pas mengisi jendela 16:9.
+  const quarterTurn = rotation === 90 || rotation === 270;
+  const objectFit = VIDEO?.fit === 'contain' ? 'contain' : 'cover';
+
+  const videoStyle = useMemo(
+    (): CSSProperties => ({
+      width: quarterTurn ? `${100 / FRAME_RATIO}%` : '100%',
+      height: quarterTurn ? `${FRAME_RATIO * 100}%` : '100%',
+      transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+      objectFit,
+    }),
+    [quarterTurn, rotation, objectFit]
+  );
+
+  useEffect(() => {
+    setPlaying(false);
+  }, [VIDEO?.url]);
 
   function reveal() {
     clearTimeout(hide.current);
@@ -90,22 +128,25 @@ export default function VideoPlayer() {
       }}
       onPointerDown={reveal}
     >
-      <img
-        className={`video-poster ${playing ? 'poster-hidden' : ''}`}
-        src={VIDEO.poster || '/posters/cote.webp'}
-        alt=""
-        width="1280"
-        height="720"
-        loading="lazy"
-      />
-      <div className={VIDEO.rotation ? 'video-rotated-wrap' : 'video-standard-wrap'}>
+      <div className="cote-frame">
+        <img
+          className={`video-poster ${playing ? 'poster-hidden' : ''}`}
+          src={VIDEO.poster || '/posters/cote.webp'}
+          alt=""
+          width="1280"
+          height="720"
+          loading="lazy"
+        />
         <video
           ref={video}
+          className="cote-video"
+          key={VIDEO.url}
+          style={videoStyle}
           muted={muted}
           loop
           playsInline
           preload="none"
-          aria-label={VIDEO.title}
+          aria-label={`Video ${VIDEO.title}, diputar otomatis dan berulang`}
           onPlaying={() => {
             setPlaying(true);
             setError(false);

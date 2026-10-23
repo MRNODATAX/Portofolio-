@@ -11,6 +11,12 @@ Dilengkapi dengan **Halaman Admin Studio (`/admin`)** penuh untuk menambah, meng
   - Dilindungi *rate-limiting* anti-*brute-force*, proteksi *Cross-Site Request* (`Sec-Fetch-Site` & `Origin`), sanitasi *prototype pollution*, sanitasi skema URL (`javascript:`/`data:text/html` diblokir), serta validasi *magic-bytes* biner pada unggahan gambar (menolak `.svg`/poliglot XSS).
 - **Kelola Penuh Seluruh Bab**:
   - **Proyek (`01`)**, **Beyond the Code (`02`)**, **Perjalanan (`03`)**, **Stack & Orbit Tools (`04`)**, **Waifu & Personal Universe (`05`)**, **Relay AI (`06`)**, **Sertifikat & Apresiasi (`07`)**, **The Ethos (`08`)**, hingga **Moderasi Komentar Pengunjung (`09`)** & **Kontak Footer**.
+- **Editor Kartu Foto Hero (Tab `Hero & Identitas`)**:
+  - Tumpukan kaca 3D di Hero sepenuhnya dinamis: admin bisa **menambah**, **mengedit** (judul, caption, foto + titik fokus crop), **mengurutkan** (`Naik` / `Turun`), dan **menghapus** kartu, serta **Reset ke 3 Kartu Bawaan**. Kartu pertama selalu tampil paling depan.
+- **Editor Video Banner (Tab `Waifu & Universe`)**:
+  - **Ganti video** lewat upload langsung (MP4 / WebM, divalidasi *magic-bytes*-nya) atau tempel URL eksternal (Supabase Storage / Cloudinary / GitHub Raw).
+  - **Kontrol orientasi**: dropdown rotasi `0°`, `-90°`, `+90°`, `180°` + tombol **Deteksi Orientasi Otomatis** (membaca `videoWidth`/`videoHeight` lalu menentukan sudut yang tepat) dan **Luruskan (0°)**, serta opsi **Isi penuh (cover)** / **Muat utuh (contain)** dan **Poster/Thumbnail**.
+  - Catatan: batas *request body* Vercel adalah ~4.5 MB, jadi upload langsung dibatasi ±4 MB. Untuk video lebih besar, unggah ke Supabase Storage / Cloudinary lalu tempel URL-nya.
 - **Fleksibel Tanpa DB atau Dengan Cloud DB (Supabase / Upstash)**:
   - **Tanpa DB (Zero-Config Deploy)**: Langsung tampil 100% di Vercel dari `shared/site-data.json`.
   - **Dengan Supabase (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`)**: Menyimpan seluruh editan `/admin`, unggahan gambar ke Supabase Storage (`portfolio-assets`), dan komentar pengunjung secara permanen (lihat `supabase/schema.sql`).

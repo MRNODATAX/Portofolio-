@@ -67,6 +67,7 @@
     "url": "https://res.cloudinary.com/dhxfke7kq/video/upload/v1791439342/Ssstt/wnudrzps2bdshrcyykkw.mp4",
     "poster": "/posters/cote.webp",
     "rotation": -90,
+    "fit": "cover",
     "title": "Classroom of the Elite"
   }
 }
