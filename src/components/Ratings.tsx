@@ -1,0 +1,49 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { ArrowUpRight, ArrowLeft, ArrowRight, Pause, Play, Check, LoaderCircle } from 'lucide-react';
+import { Chapter } from './Primitives';
+import { useReviewRail } from '../hooks/useReviewRail';
+type Review={id:string;name:string;stars:number;comment:string;createdAt:string;demo?:boolean};
+type Snapshot={configured:boolean;count:number;average:number;reviews:Review[];challenge:string};
+const examples:Review[]=[
+  {id:'demo-dimas',name:'Dimas',stars:5,comment:'tampilan glass & animasinya mulus banget',createdAt:'2026-10-10',demo:true},
+  {id:'demo-nanda',name:'Nanda',stars:5,comment:'projek bot WA & AI-nya mantap, lanjut terus!',createdAt:'2026-10-10',demo:true},
+  {id:'demo-farhan',name:'Farhan',stars:5,comment:'referensi portofolio dark mode paling rapi',createdAt:'2026-10-10',demo:true}
+];
+const empty:Snapshot={configured:false,count:0,average:0,reviews:[],challenge:''};
+function newID(){if(typeof crypto.randomUUID==='function')return crypto.randomUUID();const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;const s=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');return `${s.slice(0,8)}-${s.slice(8,12)}-${s.slice(12,16)}-${s.slice(16,20)}-${s.slice(20)}`;}
+function Star({filled=false}:{filled?:boolean}){return <svg viewBox="0 0 32 32" className={filled?'rating-star filled':'rating-star'} aria-hidden="true"><path d="m16 3 4 8.1 9 1.3-6.5 6.3 1.5 9L16 23.5l-8 4.2 1.5-9L3 12.4l9-1.3Z"/></svg>;}
+export default function Ratings({paused=false}:{paused?:boolean}){
+  const [snapshot,setSnapshot]=useState<Snapshot>(empty),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[sent,setSent]=useState(false);
+  const [name,setName]=useState(''),[comment,setComment]=useState(''),[stars,setStars]=useState(0),[hover,setHover]=useState(0),[website,setWebsite]=useState('');
+  const displayed=[...snapshot.reviews,...examples];
+  const {rail,auto,setAuto,move,hold}=useReviewRail(displayed.length,paused);
+  const client=useRef(''),lock=useRef(false),pending=useRef<{id:string;value:string}|null>(null),abort=useRef<AbortController|null>(null);
+  async function load(signal?:AbortSignal){
+    setLoading(true);
+    const controller=new AbortController();abort.current=controller;const cancel=()=>controller.abort();signal?.addEventListener('abort',cancel,{once:true});const timeout=setTimeout(cancel,12000);
+    try{const response=await fetch(`/api/ratings?client=${encodeURIComponent(client.current)}`,{signal:controller.signal,cache:'no-store'});const body=await response.json();if(!response.ok){if(body.configured===false){setSnapshot(empty);setError('');return;}throw new Error(body.error||'Rating belum dapat dimuat.');}if(!Array.isArray(body.reviews)||typeof body.challenge!=='string')throw new Error('Rating belum dapat dimuat.');setSnapshot(body);setError('');}
+    catch(e){if(!signal?.aborted)setError(controller.signal.aborted?'Rating terlalu lama dimuat. Coba lagi.':e instanceof Error?e.message:'Koneksi terputus.');}finally{clearTimeout(timeout);signal?.removeEventListener('abort',cancel);if(!signal?.aborted)setLoading(false);}
+  }
+  useEffect(()=>{
+    let id='';try{id=localStorage.getItem('nodata-rating-client')||'';}catch{}
+    if(!/^[0-9a-f-]{36}$/i.test(id)){id=newID();try{localStorage.setItem('nodata-rating-client',id);}catch{}}
+    client.current=id;
+    try{const at=Number(localStorage.getItem('nodata-rating-sent')||0);setSent(Date.now()-at<86400000&&at>0);}catch{}
+    const controller=new AbortController();abort.current=controller;void load(controller.signal);
+    return()=>{controller.abort();abort.current?.abort();};
+  },[]);
+  async function submit(e:FormEvent){
+    e.preventDefault();if(lock.current||!snapshot.configured||sent)return;
+    if(!stars){setError('Pilih jumlah bintang dulu.');return;}
+    if(!name.trim()){setError('Isi nama kamu dulu.');document.getElementById('rating-name')?.focus();return;}
+    lock.current=true;setBusy(true);setError('');
+    const value=JSON.stringify([name.trim(),stars,comment.trim()]);if(pending.current?.value!==value)pending.current={id:newID(),value};
+    const controller=new AbortController();abort.current=controller;const timeout=setTimeout(()=>controller.abort(),12000);
+    try{const response=await fetch('/api/ratings',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({name:name.trim(),stars,comment:comment.trim(),website,client:client.current,requestId:pending.current.id,challenge:snapshot.challenge})});const body=await response.json();if(!response.ok){if(body.code==='REFRESH')await load();throw new Error(body.error||'Rating belum tersimpan.');}if(body.accepted!==true||!body.review)throw new Error('Rating belum tersimpan.');setSnapshot(s=>({...s,count:body.count,average:body.average,reviews:[body.review,...s.reviews.filter(r=>r.id!==body.review.id)].slice(0,20)}));setSent(true);try{localStorage.setItem('nodata-rating-sent',String(Date.now()));}catch{}}
+    catch(e){setError(controller.signal.aborted?'Koneksi terlalu lama. Coba kirim lagi; rating yang sama tidak akan dihitung dua kali.':e instanceof Error?e.message:'Rating belum tersimpan.');}finally{clearTimeout(timeout);lock.current=false;setBusy(false);}
+  }
+  return <section className="ratings section-pad" id="rating" aria-labelledby="rating-title"><div className="wrap"><Chapter number="09">A NOTE FROM YOU</Chapter><div className="rating-layout"><div className="rating-intro"><h2 id="rating-title">How did it feel?<br/><em>Kasih sedikit kesan.</em></h2><p>Nama, beberapa bintang, dan kalau mau, satu dua kalimat. Setiap masukan sangat berarti untuk terus berkembang.</p><div className="rating-summary" aria-live="polite">{loading?<span>Memuat kesan pengunjung…</span>:snapshot.count>0?<><strong>{snapshot.average.toFixed(1)}</strong><div><div className="rating-summary-stars">{[1,2,3,4,5].map(n=><Star key={n} filled={n<=Math.round(snapshot.average)}/>)}</div><span>{snapshot.count} rating pengunjung</span></div></>:<span>{snapshot.configured?'Belum ada rating. Kesan pertama bisa dari kamu.':'Rating belum tersedia.'}</span>}</div></div>
+    <form className="rating-form" onSubmit={submit}><fieldset disabled={busy||!snapshot.configured||sent}><legend className="sr-only">Kirim rating portofolio</legend><div className="rating-picker" role="radiogroup" aria-required="true" aria-label="Jumlah bintang" onPointerLeave={()=>setHover(0)}>{[1,2,3,4,5].map(n=><button type="button" role="radio" aria-checked={stars===n} aria-label={`${n} bintang`} key={n} tabIndex={stars===n||(!stars&&n===1)?0:-1} onPointerEnter={()=>setHover(n)} onFocus={()=>setHover(n)} onBlur={()=>setHover(0)} onClick={()=>setStars(n)} onKeyDown={e=>{if(['ArrowRight','ArrowLeft','Home','End'].includes(e.key)){e.preventDefault();const next=e.key==='Home'?1:e.key==='End'?5:Math.min(5,Math.max(1,n+(e.key==='ArrowRight'?1:-1)));setStars(next);(e.currentTarget.parentElement?.children[next-1] as HTMLButtonElement)?.focus();}}}><Star filled={n<=(hover||stars)}/></button>)}</div><label htmlFor="rating-name">Nama<span aria-hidden="true"> *</span></label><input id="rating-name" name="name" autoComplete="nickname" maxLength={50} value={name} onChange={e=>setName(e.target.value)} placeholder="Nama kamu" required/><label htmlFor="rating-comment">Komentar <small>opsional</small></label><textarea id="rating-comment" name="comment" rows={3} maxLength={600} value={comment} onChange={e=>setComment(e.target.value)} placeholder="Apa yang paling berkesan?"/><label className="rating-trap" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" name="website" value={website} onChange={e=>setWebsite(e.target.value)}/></label><button className="button button-blue" type="submit">{busy?<><LoaderCircle className="spin" size={17}/>Mengirim…</>:<>Kirim kesan<ArrowUpRight size={17}/></>}</button></fieldset>{sent&&<p className="rating-success" role="status"><Check size={18}/>Terima kasih, kesan kamu sudah diterima.</p>}{error&&<p className="rating-error" role="alert">{error}</p>}{!loading&&!snapshot.configured&&<button type="button" className="text-link" onClick={()=>void load()}>Muat ulang rating<ArrowUpRight size={15}/></button>}<p className="rating-public-note">Nama dan komentar tampil publik. Tidak perlu email atau akun.</p></form></div>
+    {displayed.length>0&&<div className="review-carousel"><div className="review-navigation"><span>KESAN PENGUNJUNG / GESER UNTUK MEMBACA</span>{displayed.length>1&&<div><button aria-label={auto?'Jeda gerak komentar':'Aktifkan gerak komentar'} aria-pressed={!auto} onClick={()=>setAuto(v=>!v)}>{auto?<Pause size={16}/>:<Play size={16}/>}</button><button aria-label="Komentar sebelumnya" onClick={()=>move(-1)}><ArrowLeft size={18}/></button><button aria-label="Komentar berikutnya" onClick={()=>move(1)}><ArrowRight size={18}/></button></div>}</div><div className="visitor-notes" ref={rail} role="region" aria-label="Kesan pengunjung, geser horizontal" tabIndex={0} onKeyDown={e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();move(e.key==='ArrowLeft'?-1:1);}else hold();}}>{displayed.map(r=><article className="visitor-note" key={r.id}><div><strong>{r.name}</strong><span className="review-example" hidden={!r.demo}>Contoh</span>{!r.demo&&<time dateTime={r.createdAt}>{new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Jakarta'}).format(new Date(r.createdAt))}</time>}</div><div className="visitor-stars" aria-label={`${r.stars} dari 5 bintang`}>{[1,2,3,4,5].map(n=><Star key={n} filled={n<=r.stars}/>)}</div>{r.comment&&<p>{r.comment}</p>}</article>)}</div></div>}
+  </div></section>;
+}

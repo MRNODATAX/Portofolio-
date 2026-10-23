@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a1711"/>
+      <stop offset="100%" stop-color="#122a1e"/>
+    </linearGradient>
+    <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#86efac"/>
+      <stop offset="100%" stop-color="#4ade80"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="520" fill="url(#bg)"/>
+  <g stroke="#86efac" stroke-opacity="0.15" fill="none">
+    <rect x="24" y="24" width="752" height="472" rx="12" stroke-width="1.5"/>
+    <rect x="34" y="34" width="732" height="452" rx="8" stroke-width="1"/>
+    <path d="M24 94h752M24 424h752"/>
+    <circle cx="655" cy="262" r="138"/>
+    <circle cx="655" cy="262" r="106" stroke-dasharray="4 6"/>
+    <circle cx="655" cy="262" r="74"/>
+  </g>
+  <text x="744" y="66" text-anchor="end" fill="#8fa3ba" font-family="monospace" font-size="11.5">GOOGLE-AAD-2026-0201</text>
+
+  <rect x="56" y="122" width="8" height="20" rx="2" fill="url(#foil)"/>
+  <text x="74" y="137" fill="#86efac" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="2">GOOGLE DEVELOPERS CERTIFICATION</text>
+
+  <text x="56" y="200" fill="#f4f7fb" font-family="Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-0.8">Google Associate</text>
+  <text x="56" y="246" fill="#86efac" font-family="Georgia, serif" font-style="italic" font-size="36">Android Developer</text>
+
+  <text x="56" y="308" fill="#8fa3ba" font-family="Arial, sans-serif" font-size="11" letter-spacing="1.8">DIBERIKAN KEPADA / AWARDED TO</text>
+  <text x="56" y="342" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">Rahman Zuhri (No_Data)</text>
+  <path d="M56 358h330" stroke="#86efac" stroke-opacity="0.35"/>
+
+  <g transform="translate(655 262)">
+    <circle r="52" fill="#86efac" fill-opacity="0.12" stroke="url(#foil)" stroke-width="2"/>
+    <circle r="42" fill="none" stroke="#86efac" stroke-opacity="0.5" stroke-dasharray="3 3"/>
+    <path d="M-15 2 l10 10 l22 -23" fill="none" stroke="#86efac" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="56" y="460" fill="#9fb0c4" font-family="Arial, sans-serif" font-size="12" font-weight="600">Diterbitkan: 1 Februari 2026</text>
+  <text x="56" y="478" fill="#86efac" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" letter-spacing="1.4">GOOGLE DEVELOPERS CREDENTIAL</text>
+</svg>

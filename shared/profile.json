@@ -1,0 +1,72 @@
+{
+  "name": "No_Data",
+  "fullName": "Rahman Zuhri",
+  "brand": "NODATA OFFICIAL",
+  "role": "Web & App Developer · AI Automation",
+  "location": "Jakarta, Indonesia",
+  "education": "Fresh Graduate (Alumni Pondok Pesantren 2025)",
+  "device": "LAPTOP & OS / AWAL 2025",
+  "tagline": "Aku No_Data (Rahman Zuhri). Aktif menggarap side project web & app development serta otomatisasi AI — mulai dari AI Agent, bot WhatsApp & Telegram, desain branding, hingga analisis pasar finansial.",
+  "about": "Ketertarikanku pada dunia teknologi berakar dari rasa penasaran masa kecil—mengulik perangkat keras, bermain game, hingga terinspirasi oleh visual dan kultur komputasi dalam serial Mr. Robot. Namun, titik balik yang sesungguhnya baru dimulai setelah lulus dari pondok pesantren pada tahun 2025, saat aku mulai menyelami sistem operasi, meriset arsitektur perangkat lunak, dan mengeksekusi baris kode pertama.",
+  "motivation": "Di sela-sela aktivitas utama, aku aktif mengerjakan berbagai side project pengembangan web, aplikasi, serta otomatisasi berbasis AI. Saat ini fokusku mendalami AI Agent, pembuatan bot otomatisasi WhatsApp & Telegram, desain branding, hingga analisis pasar finansial (financial market analysis).",
+  "approach": "Setiap proyek selalu diawali dengan riset dan perencanaan yang terstruktur sebelum masuk ke tahap eksekusi. Aku terbiasa mengintegrasikan AI modern untuk mempercepat alur kerja harian—fleksibel bekerja mandiri dari hulu ke hilir maupun berkolaborasi dalam tim untuk skala proyek yang kompleks.",
+  "ethos": "Tidak ada batasan apa pun untuk terus berkembang. Dari rasa penasaran masa kecil hingga disiplin belajar pasca-pondok, setiap baris kode, riset sistem, dan eksperimen AI adalah pijakan menuju produk digital yang mandiri dan berdampak nyata.",
+  "socials": [
+    {
+      "name": "WhatsApp",
+      "handle": "0881-0805-93445",
+      "url": "https://wa.me/62881080593445"
+    },
+    {
+      "name": "Instagram",
+      "handle": "@nodatanotdev",
+      "url": "https://www.instagram.com/nodatanotdev"
+    },
+    {
+      "name": "GitHub",
+      "handle": "MRNODATAX",
+      "url": "https://github.com/MRNODATAX"
+    }
+  ],
+  "anime": [
+    {
+      "id": "alya",
+      "name": "Alya Kujou",
+      "origin": "Tokidoki Bosotto Russia-go de Dereru Tonari no Alya-san",
+      "label": "Silver-haired perfectionist",
+      "note": "Perfeksionis berambut perak yang cerdas, disiplin, dan kompetitif di luar — namun sesekali menyembunyikan sisi hangat dan jujurnya dalam bisikan bahasa Rusia.",
+      "image": "/images/anime-v22/alya.jpg",
+      "focal": "50% 18%",
+      "source": "https://roshidere.com/",
+      "color": "#b7c4d6"
+    },
+    {
+      "id": "miku",
+      "name": "Miku Nakano",
+      "origin": "Go-Toubun no Hanayome",
+      "label": "Quiet devotion",
+      "note": "Tenang, observan, dan selalu lekat dengan headphone birunya. Di balik sifat pemalunya, tersimpan ketekunan luar biasa saat memperjuangkan hal yang ia yakini.",
+      "image": "/images/anime-v22/miku.jpg",
+      "focal": "50% 20%",
+      "source": "https://www.tbs.co.jp/anime/5hanayome/",
+      "color": "#8fa9c9"
+    },
+    {
+      "id": "mahiru",
+      "name": "Mahiru Shiina",
+      "origin": "Otonari no Tenshi-sama",
+      "label": "Warm serenity",
+      "note": "Sosok anggun dan tulus yang membawa ketenangan lewat perhatian pada detail-detail sederhana di keseharian — hangat tanpa perlu banyak bicara.",
+      "image": "/images/anime-v22/mahiru.jpg",
+      "focal": "50% 16%",
+      "source": "https://otonarino-tenshisama.jp/",
+      "color": "#d4b996"
+    }
+  ],
+  "video": {
+    "url": "https://res.cloudinary.com/dhxfke7kq/video/upload/v1791439342/Ssstt/wnudrzps2bdshrcyykkw.mp4",
+    "poster": "/posters/cote.webp",
+    "rotation": -90,
+    "title": "Classroom of the Elite"
+  }
+}
