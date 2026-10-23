@@ -63,6 +63,72 @@ export function getSupabaseConfig() {
   }
 }
 
+/**
+ * Mendeteksi jenis kunci Supabase yang dipasang.
+ * Panel /admin butuh **secret / service_role key** karena RLS menolak tulis dari
+ * publishable (anon) key. Fungsi ini dipakai untuk memberi pesan error yang jelas
+ * (bukan sekadar "gagal menyimpan").
+ */
+export function supabaseKeyRole(key = process.env.SUPABASE_SERVICE_ROLE_KEY || '') {
+  const value = String(key || '').trim();
+  if (!value) return 'none';
+  if (value.startsWith('sb_secret_')) return 'service_role';
+  if (value.startsWith('sb_publishable_')) return 'anon';
+
+  // Format lama: JWT berisi claim "role".
+  const parts = value.split('.');
+  if (parts.length === 3) {
+    try {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+      if (payload?.role === 'service_role') return 'service_role';
+      if (payload?.role === 'anon') return 'anon';
+      if (payload?.role) return String(payload.role);
+    } catch {
+      // Bukan JWT valid.
+    }
+  }
+  return 'unknown';
+}
+
+let supabaseDiagCache = { at: 0, value: null };
+
+/** Diagnosa ringan koneksi Supabase (di-cache 60 detik) untuk ditampilkan di /admin. */
+export async function supabaseDiagnostics() {
+  const sb = getSupabaseConfig();
+  const keyRole = supabaseKeyRole();
+  if (!sb) {
+    return { configured: false, mode: getStorageMode(), keyRole: 'none', reachable: false, error: '' };
+  }
+
+  const now = Date.now();
+  if (supabaseDiagCache.value && now - supabaseDiagCache.at < 60_000) {
+    return { ...supabaseDiagCache.value, keyRole };
+  }
+
+  let reachable = false;
+  let error = '';
+  try {
+    const res = await fetch(`${sb.url}/rest/v1/site_cms?select=id&limit=1`, {
+      headers: supabaseHeaders(sb, { Accept: 'application/json' }),
+    });
+    reachable = res.ok;
+    if (!res.ok) {
+      error =
+        res.status === 401 || res.status === 403
+          ? `HTTP ${res.status} — kunci ditolak Supabase. Pastikan memakai SECRET / service_role key, bukan publishable key.`
+          : res.status === 404
+            ? 'HTTP 404 — tabel site_cms belum dibuat. Jalankan supabase/schema.sql di SQL Editor.'
+            : `HTTP ${res.status}`;
+    }
+  } catch (err) {
+    error = err instanceof Error ? err.message.slice(0, 160) : 'Tidak dapat menghubungi Supabase.';
+  }
+
+  const value = { configured: true, mode: 'supabase', keyRole, reachable, error };
+  supabaseDiagCache = { at: now, value };
+  return value;
+}
+
 export function supabaseHeaders(sb, extra = {}) {
   return {
     apikey: sb.key,
@@ -331,6 +397,12 @@ export async function saveSiteData(nextData) {
 
   const sb = getSupabaseConfig();
   if (sb) {
+    // Cegah kebingungan umum: publishable (anon) key tidak bisa menulis karena RLS aktif.
+    if (supabaseKeyRole(sb.key) === 'anon') {
+      throw new Error(
+        'SUPABASE_SERVICE_ROLE_KEY berisi PUBLISHABLE / anon key, sehingga Supabase menolak semua penulisan. Ganti dengan SECRET key (service_role, format sb_secret_...) di Vercel → Settings → Environment Variables, lalu Redeploy.'
+      );
+    }
     const res = await fetch(`${sb.url}/rest/v1/site_cms`, {
       method: 'POST',
       headers: supabaseHeaders(sb, {
@@ -344,7 +416,13 @@ export async function saveSiteData(nextData) {
       }),
     });
     if (!res.ok) {
-      throw new Error('Gagal menyimpan ke Supabase Database. Pastikan tabel site_cms sudah dibuat.');
+      const detail =
+        res.status === 401 || res.status === 403
+          ? `Kunci Supabase ditolak (HTTP ${res.status}). Pastikan SUPABASE_SERVICE_ROLE_KEY berisi SECRET / service_role key (sb_secret_...), BUKAN publishable key.`
+          : res.status === 404
+            ? `Tabel site_cms belum ada (HTTP 404). Jalankan file supabase/schema.sql di SQL Editor Supabase.`
+            : `Supabase menolak penyimpanan (HTTP ${res.status}). Periksa Environment Variable dan RLS di dashboard Supabase.`;
+      throw new Error(detail);
     }
     persistedTo = 'supabase';
   } else {
