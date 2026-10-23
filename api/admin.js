@@ -7,6 +7,7 @@ import {
   requireAdminAuth,
 } from '../shared/auth.mjs';
 import { applyApiSecurityHeaders, isCrossSiteRequest, parseJsonBody } from '../shared/security.mjs';
+import { deleteSecret, getSecretStatus, isValidSecretName, putSecret, testGeminiConnection } from '../shared/secrets.mjs';
 import {
   getStorageMode,
   getSupabaseConfig,
@@ -88,6 +89,56 @@ export default async function handler(req, res) {
 
   if (!requireAdminAuth(req)) {
     return res.status(401).json({ error: 'Sesi admin tidak valid.' });
+  }
+
+  // ── Brankas rahasia integrasi (API key Gemini) ─────────────────────────────
+  // Nilai asli tidak pernah dikembalikan ke browser, hanya versi tersensor.
+  if (action === 'get-secret') {
+    const name = String(body.name || '').trim();
+    if (!isValidSecretName(name)) {
+      return res.status(400).json({ error: 'Nama rahasia tidak dikenali.' });
+    }
+    try {
+      return res.status(200).json({ ok: true, secret: await getSecretStatus(name) });
+    } catch {
+      return res.status(500).json({ error: 'Gagal membaca brankas rahasia.' });
+    }
+  }
+
+  if (action === 'put-secret') {
+    const name = String(body.name || '').trim();
+    const value = typeof body.value === 'string' ? body.value : '';
+    if (!isValidSecretName(name)) {
+      return res.status(400).json({ error: 'Nama rahasia tidak dikenali.' });
+    }
+    try {
+      const secret = await putSecret(name, value);
+      return res.status(200).json({ ok: true, secret });
+    } catch (err) {
+      return res.status(400).json({ error: err instanceof Error ? err.message : 'Gagal menyimpan rahasia.' });
+    }
+  }
+
+  if (action === 'delete-secret') {
+    const name = String(body.name || '').trim();
+    if (!isValidSecretName(name)) {
+      return res.status(400).json({ error: 'Nama rahasia tidak dikenali.' });
+    }
+    try {
+      const secret = await deleteSecret(name);
+      return res.status(200).json({ ok: true, secret });
+    } catch (err) {
+      return res.status(400).json({ error: err instanceof Error ? err.message : 'Gagal menghapus rahasia.' });
+    }
+  }
+
+  if (action === 'test-secret') {
+    const name = String(body.name || 'geminiApiKey').trim();
+    if (!isValidSecretName(name)) {
+      return res.status(400).json({ error: 'Nama rahasia tidak dikenali.' });
+    }
+    const result = await testGeminiConnection();
+    return res.status(result.ok ? 200 : 400).json({ ok: result.ok, ...result });
   }
 
   if (action === 'delete-review') {

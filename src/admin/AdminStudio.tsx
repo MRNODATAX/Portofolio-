@@ -7,9 +7,13 @@ import {
   Check,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   FolderKanban,
   Heart,
+  KeyRound,
   Layers,
+  Zap,
   LoaderCircle,
   Lock,
   LogOut,
@@ -97,6 +101,12 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
   const [ratingStats, setRatingStats] = useState({ count: 0, average: 0 });
   const [aiProvider, setAiProvider] = useState('');
   const [aiModel, setAiModel] = useState('');
+  const [secret, setSecret] = useState<{ configured: boolean; source: string; masked: string; updatedAt: string } | null>(null);
+  const [keyDraft, setKeyDraft] = useState('');
+  const [keyRevealed, setKeyRevealed] = useState(false);
+  const [keyBusy, setKeyBusy] = useState<'save' | 'test' | 'delete' | ''>('');
+  const [keyMsg, setKeyMsg] = useState('');
+  const [keyErr, setKeyErr] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -168,6 +178,64 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
       active = false;
     };
   }, [authenticated]);
+
+  /* ── Brankas API key Gemini (dienkripsi, tidak pernah dikembalikan utuh) ── */
+  async function loadSecret() {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'get-secret', name: 'geminiApiKey' }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (res.ok && body?.secret) {
+        setSecret({
+          configured: Boolean(body.secret.configured),
+          source: String(body.secret.source || 'none'),
+          masked: String(body.secret.masked || ''),
+          updatedAt: String(body.secret.updatedAt || ''),
+        });
+      }
+    } catch {
+      // Diamkan — status akan tetap kosong bila gagal dimuat.
+    }
+  }
+
+  useEffect(() => {
+    if (authenticated) void loadSecret();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated]);
+
+  async function secretRequest(action: 'put-secret' | 'delete-secret' | 'test-secret', value?: string) {
+    setKeyBusy(action === 'put-secret' ? 'save' : action === 'delete-secret' ? 'delete' : 'test');
+    setKeyErr('');
+    setKeyMsg('');
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action, name: 'geminiApiKey', ...(value !== undefined ? { value } : {}) }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Permintaan gagal diproses.');
+      if (action === 'test-secret') {
+        const models = Array.isArray(body.models) ? body.models.slice(0, 6).join(', ') : '';
+        setKeyMsg(`✅ Terhubung ke Gemini${models ? ` · model tersedia: ${models}` : ''}${body.source === 'env' ? ' (memakai Environment Variable)' : ''}`);
+      } else if (action === 'delete-secret') {
+        setKeyMsg('API key dihapus. Relay kembali ke mode pengetahuan lokal.');
+        setKeyDraft('');
+      } else {
+        setKeyMsg(`API key tersimpan & terenkripsi (${body.persistedTo || 'tersimpan'}). Relay siap memakai Gemini.`);
+        setKeyDraft('');
+      }
+      await loadSecret();
+      setToast({ text: action === 'test-secret' ? 'Tes koneksi selesai.' : 'Pengaturan AI diperbarui.' });
+    } catch (error) {
+      setKeyErr(error instanceof Error ? error.message : 'Terjadi kesalahan.');
+    } finally {
+      setKeyBusy('');
+    }
+  }
 
   function updateDraft(updater: (prev: SiteData) => SiteData) {
     setDraft((prev) => {
@@ -2271,9 +2339,211 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
               </div>
 
               <div className="admin-card">
+                <h3>API Key Gemini (bisa langsung ditulis di sini)</h3>
+                <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.75, marginBottom: 12 }}>
+                  Tempel API key Google Gemini Anda di bawah ini — tanpa perlu menyentuh Vercel atau file{' '}
+                  <code>.env</code>. Key <strong>langsung dienkripsi</strong> (AES-256-GCM + scrypt) sebelum
+                  disimpan, disimpan <strong>terpisah dari data publik website</strong>, dan{' '}
+                  <strong>tidak pernah dikembalikan ke browser</strong> — panel ini hanya menampilkan versi
+                  tersensor.
+                </p>
+
+                <div className="admin-field">
+                  <label>Status Key</label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+                    <span className="admin-badge">
+                      {secret?.configured
+                        ? secret.source === 'env'
+                          ? 'Aktif · dari Environment Variable'
+                          : 'Aktif · tersimpan terenkripsi'
+                        : 'Belum ada key'}
+                    </span>
+                    {secret?.masked && <code style={{ fontSize: 11.5 }}>{secret.masked}</code>}
+                    {secret?.updatedAt && (
+                      <small style={{ color: 'var(--quiet)', fontSize: 11 }}>
+                        diperbarui {new Date(secret.updatedAt).toLocaleString('id-ID')}
+                      </small>
+                    )}
+                  </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>GEMINI_API_KEY (diawali “AIza…”, kosongkan bila tidak diubah)</label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input
+                      type={keyRevealed ? 'text' : 'password'}
+                      value={keyDraft}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder={
+                        secret?.configured
+                          ? secret.source === 'env'
+                            ? 'Sedang memakai Environment Variable — isi di sini untuk menggantinya'
+                            : '•••••••• tersimpan — isi hanya untuk mengganti'
+                          : 'AIza...'
+                      }
+                      onChange={(e) => setKeyDraft(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-sm"
+                      onClick={() => setKeyRevealed((v) => !v)}
+                      aria-label={keyRevealed ? 'Sembunyikan key' : 'Tampilkan key'}
+                    >
+                      {keyRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="admin-field">
+                  <label>Model Gemini</label>
+                  <select
+                    value={draft.relay.aiModel || 'gemini-2.5-flash'}
+                    onChange={(e) => updateDraft((d) => ({ ...d, relay: { ...d.relay, aiModel: e.target.value } }))}
+                    style={{ maxWidth: 320 }}
+                  >
+                    <option value="gemini-2.5-flash">gemini-2.5-flash (cepat & hemat — rekomendasi)</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro (paling pintar)</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash (cadangan)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-primary admin-btn-sm"
+                    disabled={!keyDraft.trim() || keyBusy !== ''}
+                    onClick={() => secretRequest('put-secret', keyDraft.trim())}
+                  >
+                    {keyBusy === 'save' ? <LoaderCircle size={14} className="spin" /> : <KeyRound size={14} />}
+                    Simpan &amp; Enkripsi Key
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm"
+                    disabled={keyBusy !== ''}
+                    onClick={() => secretRequest('test-secret')}
+                  >
+                    {keyBusy === 'test' ? <LoaderCircle size={14} className="spin" /> : <Zap size={14} />}
+                    Test Koneksi
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm admin-btn-danger"
+                    disabled={!secret?.configured || secret.source === 'env' || keyBusy !== ''}
+                    onClick={() => secretRequest('delete-secret')}
+                  >
+                    <Trash2 size={13} />
+                    Hapus Key
+                  </button>
+                </div>
+
+                {keyMsg && <p style={{ color: '#8fd694', fontSize: 11.5, marginTop: 8, lineHeight: 1.6 }}>{keyMsg}</p>}
+                {keyErr && <p style={{ color: '#f28b82', fontSize: 11.5, marginTop: 8, lineHeight: 1.6 }}>{keyErr}</p>}
+
+                <p style={{ fontSize: 11, color: 'var(--quiet)', lineHeight: 1.75, marginTop: 12 }}>
+                  <strong>Catatan:</strong> Environment Variable <code>GEMINI_API_KEY</code> di Vercel (bila ada)
+                  selalu dipakai lebih dulu daripada key di sini. Tanpa key pun Relay tetap menjawab lewat basis
+                  pengetahuan portofolio, dan bila API gagal/kuota habis Relay otomatis kembali ke mode tersebut
+                  tanpa menampilkan error ke pengunjung.
+                </p>
+              </div>
+
+              <div className="admin-card">
+                <h3>Gelembung Chat Relay (Floating Bubble)</h3>
+                <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 12 }}>
+                  Widget AI melayang di pojok layar seperti <strong>NODATA•AI</strong>. Percakapan berbentuk
+                  gelembung, bisa dibuka/tutup kapan saja di seluruh halaman website (otomatis disembunyikan di
+                  halaman <code>/admin</code>).
+                </p>
+                <div className="admin-grid-3">
+                  <div className="admin-field">
+                    <label>Tampilkan Gelembung</label>
+                    <select
+                      value={draft.relay.bubble?.enabled === false ? 'no' : 'yes'}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          relay: { ...d.relay, bubble: { ...(d.relay.bubble as any), enabled: e.target.value === 'yes' } },
+                        }))
+                      }
+                    >
+                      <option value="yes">Ya — tampilkan</option>
+                      <option value="no">Tidak — sembunyikan</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Posisi</label>
+                    <select
+                      value={draft.relay.bubble?.position || 'right'}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          relay: {
+                            ...d.relay,
+                            bubble: { ...(d.relay.bubble as any), position: e.target.value === 'left' ? 'left' : 'right' },
+                          },
+                        }))
+                      }
+                    >
+                      <option value="right">Kanan bawah</option>
+                      <option value="left">Kiri bawah</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Buka otomatis setelah (ms, 0 = nonaktif)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={60000}
+                      value={draft.relay.bubble?.autoOpenDelayMs ?? 0}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          relay: {
+                            ...d.relay,
+                            bubble: {
+                              ...(d.relay.bubble as any),
+                              autoOpenDelayMs: Math.max(0, Math.min(60000, Number(e.target.value) || 0)),
+                            },
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="admin-field">
+                  <label>Label Tombol Gelembung</label>
+                  <input
+                    value={draft.relay.bubble?.launcherLabel || ''}
+                    onChange={(e) =>
+                      updateDraft((d) => ({
+                        ...d,
+                        relay: { ...d.relay, bubble: { ...(d.relay.bubble as any), launcherLabel: e.target.value } },
+                      }))
+                    }
+                    placeholder="Tanya Relay AI"
+                  />
+                </div>
+                <div className="admin-field">
+                  <label>Sapaan Awal di Dalam Gelembung</label>
+                  <textarea
+                    rows={2}
+                    value={draft.relay.bubble?.greeting || ''}
+                    onChange={(e) =>
+                      updateDraft((d) => ({
+                        ...d,
+                        relay: { ...d.relay, bubble: { ...(d.relay.bubble as any), greeting: e.target.value } },
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="admin-card">
                 <h3>Engine AI Relay (Google Gemini)</h3>
                 <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 10 }}>
-                  Status saat ini:{' '}
+                  Status engine saat ini:{' '}
                   <strong style={{ color: 'var(--ink)' }}>
                     {aiProvider === 'gemini'
                       ? `Gemini aktif${aiModel ? ` · ${aiModel}` : ''}`
@@ -2285,20 +2555,16 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                   </strong>
                 </p>
                 <p style={{ fontSize: 11.5, color: 'var(--quiet)', lineHeight: 1.75 }}>
-                  API key <strong>tidak perlu</strong> dimasukkan di sini — cukup ditaruh di Environment Variable
-                  server, sehingga kunci tidak pernah terekspos ke browser:
+                  Alternatif pemasangan lewat Environment Variable server (bila lebih suka tidak menulis key di
+                  panel ini):
                   <br />
                   1. Ambil key gratis di <strong>aistudio.google.com/apikey</strong>.
                   <br />
                   2. Vercel: <strong>Project → Settings → Environment Variables</strong> → tambah{' '}
-                  <code>GEMINI_API_KEY</code> (dan opsional <code>GEMINI_MODEL</code>, default{' '}
-                  <code>gemini-2.5-flash</code>) → <strong>Redeploy</strong>.
+                  <code>GEMINI_API_KEY</code> (dan opsional <code>GEMINI_MODEL</code>) → <strong>Redeploy</strong>.
                   <br />
                   3. Lokal: salin <code>.env.example</code> → <code>.env</code>, isi variabel yang sama, lalu{' '}
                   <code>npm run dev</code>.
-                  <br />
-                  Bila kuota habis atau API gagal, Relay otomatis kembali ke basis pengetahuan portofolio tanpa
-                  menampilkan error ke pengunjung.
                 </p>
               </div>
 

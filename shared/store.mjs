@@ -63,7 +63,7 @@ export function getSupabaseConfig() {
   }
 }
 
-function supabaseHeaders(sb, extra = {}) {
+export function supabaseHeaders(sb, extra = {}) {
   return {
     apikey: sb.key,
     Authorization: `Bearer ${sb.key}`,
@@ -227,6 +227,18 @@ export function normalizeSiteData(candidate) {
   // Migrasi: data lama yang belum punya kartu stack hero dinamis dibuatkan 3 kartu bawaan.
   if (candidate.identity && !Array.isArray(candidate.identity.heroCards)) {
     candidate.identity.heroCards = structuredClone(INITIAL_SEED.identity.heroCards);
+  }
+  // Migrasi: pengaturan gelembung chat Relay (bubble) & model AI.
+  if (candidate.relay && !candidate.relay.bubble) {
+    candidate.relay.bubble = structuredClone(INITIAL_SEED.relay.bubble);
+  }
+  if (candidate.relay && !candidate.relay.aiModel) {
+    candidate.relay.aiModel = INITIAL_SEED.relay.aiModel;
+  }
+  // Jaga-jaga: hapus field rahasia bila pernah terselip ke data CMS.
+  if (candidate.relay) {
+    delete candidate.relay.geminiApiKey;
+    delete candidate.relay.apiKey;
   }
   return sanitizeSiteDataUrls(candidate);
 }

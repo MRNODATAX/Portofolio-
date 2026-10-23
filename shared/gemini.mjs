@@ -104,10 +104,10 @@ export function extractGeminiText(payload) {
  * Menjalankan satu panggilan ke Gemini. Mengembalikan teks jawaban atau string kosong
  * bila gagal (supaya pemanggil bisa jatuh ke pengetahuan lokal).
  */
-export async function askGemini(systemPrompt, messages, { env = process.env, timeoutMs = 18000, fetchImpl } = {}) {
-  if (!isGeminiConfigured(env)) return { text: '', model: '' };
+export async function askGemini(systemPrompt, messages, { env = process.env, timeoutMs = 18000, fetchImpl, apiKey } = {}) {
+  const key = String(apiKey || '').trim() || (isGeminiConfigured(env) ? env.GEMINI_API_KEY.trim() : '');
+  if (!key) return { text: '', model: '' };
 
-  const apiKey = env.GEMINI_API_KEY.trim();
   const doFetch = fetchImpl || globalThis.fetch;
   const models = geminiModelCandidates(env);
 
@@ -115,7 +115,7 @@ export async function askGemini(systemPrompt, messages, { env = process.env, tim
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), timeoutMs);
     try {
-      const { url, init } = buildGeminiRequest(systemPrompt, messages, { model, apiKey, signal: abort.signal });
+      const { url, init } = buildGeminiRequest(systemPrompt, messages, { model, apiKey: key, signal: abort.signal });
       const response = await doFetch(url, init);
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
