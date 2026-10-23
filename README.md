@@ -60,6 +60,30 @@ Yang terjadi di balik layar:
 - Kunci tetap mengikuti *rate limit* bawaan (`/api/chat` maks. 12 pesan/menit/IP) sehingga key aman dari penyalahgunaan publik.
 - `gemini-2.5-flash` memiliki *free tier* yang cukup untuk traffic portofolio pribadi. Pantau pemakaian di Google AI Studio. Bila kuota habis/invalid, Relay otomatis kembali ke mode pengetahuan lokal (website tidak pernah error).
 
+## ⚠️ Kenapa Perubahan di `/admin` Bisa Hilang? (Penting)
+
+Jika editan (foto, video, teks) terlihat sebentar lalu **kembali ke data awal setelah beberapa menit**, itu bukan bug — penyebabnya adalah **mode penyimpanan**:
+
+| Mode | Kapan terjadi | Apakah editan bertahan? |
+|---|---|---|
+| **`memory`** | Deploy Vercel **tanpa** Supabase/Upstash | ❌ Tidak. Data hanya ada di memori instance serverless; begitu instance di-*recycle* (biasanya beberapa menit tanpa trafik) atau ada redeploy, semua kembali ke `shared/site-data.json`. Upload gambar/video ikut hilang karena tidak ada Storage. |
+| **`filesystem`** | `npm run dev` / `npm run build` di komputer atau VPS | ✅ Ya — tersimpan ke `shared/site-data.json` + `public/images/uploads/`. |
+| **`supabase`** | Env `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | ✅ Permanen di cloud (DB + Storage bucket `portfolio-assets`). |
+| **`upstash`** | Env `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` | ✅ Permanen di Redis cloud. |
+
+Cek mode aktif dengan membuka **`/api/health`** (lihat field `mode`), atau badge **Storage** di pojok kiri atas `/admin`.
+
+**Solusi permanen (pilih salah satu, ±5 menit):**
+1. **Supabase (rekomendasi)** — jalankan `supabase/schema.sql` di SQL Editor, lalu pasang `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` di Vercel → **Redeploy**. Upload foto/video otomatis masuk ke bucket `portfolio-assets`.
+2. **Upstash Redis** — pasang `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` → **Redeploy**.
+3. **Tanpa DB sama sekali** — edit di lingkungan lokal/filesystem (`npm run dev`), lalu **Export JSON** dari `/admin` dan commit file `shared/site-data.json`-nya ke Git. Vercel akan selalu memuat data terbaru dari repositori pada setiap deploy.
+
+**Pelindung bawaan yang sudah dipasang:**
+- `/admin` menampilkan **banner peringatan** (kuning) bila mode = `memory`, lengkap dengan langkah mengaktifkan Supabase.
+- Setiap kali menyimpan, notifikasi menyebutkan **ke mana** data tersimpan, dan akan ditandai merah bila hanya tersimpan sementara.
+- **Autosave draf ke browser**: perubahan yang belum disimpan tetap tersimpan di browser dan bisa dipulihkan lewat tombol **Pulihkan Draf**.
+- **Export/Import JSON** ada di pojok kanan atas `/admin` untuk backup & restore manual kapan saja.
+
 ## Menjalankan Secara Lokal
 
 ```bash
