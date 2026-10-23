@@ -114,6 +114,12 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
   const [keyErr, setKeyErr] = useState('');
   const [draftBackup, setDraftBackup] = useState<{ at: number } | null>(null);
   const [showStorageHelp, setShowStorageHelp] = useState(false);
+  const [db, setDb] = useState<{
+    configured: boolean;
+    keyRole: string;
+    reachable: boolean;
+    error: string;
+  } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -209,6 +215,14 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
         if (!active || !body) return;
         setAiProvider(typeof body.aiProvider === 'string' ? body.aiProvider : '');
         setAiModel(typeof body.aiModel === 'string' ? body.aiModel : '');
+        if (body.db && typeof body.db === 'object') {
+          setDb({
+            configured: Boolean(body.db.configured),
+            keyRole: String(body.db.keyRole || 'none'),
+            reachable: Boolean(body.db.reachable),
+            error: String(body.db.error || ''),
+          });
+        }
       })
       .catch(() => {});
     return () => {
@@ -803,6 +817,50 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
         </aside>
 
         <main className="admin-main">
+          {db?.configured && (db.keyRole === 'anon' || !db.reachable) && (
+            <div className="admin-warning admin-warning-danger" role="alert">
+              <strong>
+                <AlertTriangle size={15} /> Supabase terdeteksi tapi belum bisa dipakai
+              </strong>
+              <p>
+                {db.keyRole === 'anon'
+                  ? 'Environment variable SUPABASE_SERVICE_ROLE_KEY masih berisi PUBLISHABLE / anon key. Kunci jenis ini tidak bisa menulis karena Row Level Security aktif — semua perubahan di /admin akan tetap gagal tersimpan.'
+                  : `Supabase belum bisa dijangkau${db.error ? `: ${db.error}` : '.'}`}
+              </p>
+              <ol className="admin-warning-steps">
+                <li>
+                  Supabase Dashboard → <b>Project Settings → API Keys</b> → salin <b>Secret key</b> (format{' '}
+                  <code>sb_secret_...</code>), bukan <code>sb_publishable_...</code>.
+                </li>
+                <li>
+                  Vercel → <b>Project → Settings → Environment Variables</b> → ubah nilai{' '}
+                  <code>SUPABASE_SERVICE_ROLE_KEY</code> dengan Secret key tersebut → <b>Redeploy</b>.
+                </li>
+                <li>
+                  Pastikan juga file <code>supabase/schema.sql</code> sudah dijalankan di <b>SQL Editor</b> (tabel{' '}
+                  <code>site_cms</code>, <code>site_secrets</code>, <code>visitor_reviews</code> + bucket{' '}
+                  <code>portfolio-assets</code>).
+                </li>
+                <li>
+                  Buka <code>/api/health</code> untuk memastikan <code>mode: "supabase"</code> dan{' '}
+                  <code>db.keyRole: "service_role"</code>.
+                </li>
+              </ol>
+            </div>
+          )}
+
+          {db?.configured && db.keyRole === 'service_role' && db.reachable && (
+            <div className="admin-warning admin-warning-ok" role="status">
+              <strong>
+                <Check size={15} /> Supabase terhubung — perubahan tersimpan permanen
+              </strong>
+              <p>
+                Mode penyimpanan: <b>Supabase Cloud DB + Storage</b> (service_role key). Semua editan dan file yang
+                Anda upload tersimpan permanen dan tidak akan hilang lagi.
+              </p>
+            </div>
+          )}
+
           {storageMode === 'memory' && (
             <div className="admin-warning" role="alert">
               <strong>

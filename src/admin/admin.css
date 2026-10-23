@@ -161,6 +161,18 @@
   border-left-color: var(--accent);
 }
 
+.admin-warning-danger {
+  border-color: #e0574f66;
+  background: linear-gradient(180deg, #e0574f1f, #e0574f0a);
+  border-left-color: #e0574f;
+}
+
+.admin-warning-ok {
+  border-color: #5ec26a59;
+  background: linear-gradient(180deg, #5ec26a1c, #5ec26a08);
+  border-left-color: #5ec26a;
+}
+
 .admin-badge {
   display: inline-flex;
   align-items: center;
