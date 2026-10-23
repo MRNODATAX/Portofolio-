@@ -21,6 +21,30 @@ Dilengkapi dengan **Halaman Admin Studio (`/admin`)** penuh untuk menambah, meng
   - **Tanpa DB (Zero-Config Deploy)**: Langsung tampil 100% di Vercel dari `shared/site-data.json`.
   - **Dengan Supabase (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`)**: Menyimpan seluruh editan `/admin`, unggahan gambar ke Supabase Storage (`portfolio-assets`), dan komentar pengunjung secara permanen (lihat `supabase/schema.sql`).
   - **Dengan Upstash Redis (`UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`)**: Alternatif penyimpanan *serverless* instan.
+- **Relay — Personal AI (Bab 06) dengan Dukungan Google Gemini**:
+  - **Tanpa API key**: Relay tetap menjawab 100% memakai basis pengetahuan portofolio bawaan (`shared/knowledge.mjs`) — mengerti pertanyaan seputar sertifikat, kontak, perjalanan, karya, cara kerja, tools, dan anime favorit.
+  - **Dengan `GEMINI_API_KEY`**: jawaban menjadi jauh lebih natural, kontekstual, dan bisa menangani pertanyaan bebas apa pun, tetap dibatasi oleh *system prompt* portofolio.
+
+## Integrasi Gemini API Key (Opsional — Tidak Wajib)
+
+**Apakah dibutuhkan?** Tidak. Website, `/admin`, dan Relay **sudah berfungsi penuh tanpa API key apa pun**. Gemini hanya membuat jawaban Relay lebih pintar & natural.
+
+**Cara pasang (kurang dari 3 menit):**
+
+1. Buka **https://aistudio.google.com/apikey** → login akun Google → **Create API key** → salin key-nya (format `AIza...`).
+2. **Di Vercel (production)**: **Project → Settings → Environment Variables** → tambah:
+   - `GEMINI_API_KEY` = `AIza...` *(wajib)*
+   - `GEMINI_MODEL` = `gemini-2.5-flash` *(opsional; alternatif: `gemini-2.5-pro`)*
+   Lalu **Deployments → Redeploy** agar variabel terbaca.
+3. **Di lokal**: salin `.env.example` menjadi `.env`, isi dua variabel di atas, lalu `npm run dev` (`vite.config.ts` sudah otomatis memuat env ber-prefix `GEMINI_`).
+4. Cek statusnya: buka `/api/health` → akan mengembalikan `"aiProvider": "gemini"` (atau `"local"` bila belum dipasang). Badge engine juga tampil di header panel Relay.
+
+**Urutan prioritas engine Relay:** `GEMINI_API_KEY` → `CHAT_API_KEY`/`CHAT_API_URL` (OpenAI-compatible: OpenAI, Groq, OpenRouter, Ollama) → webhook `CHAT_API_URL` → **basis pengetahuan lokal** (selalu ada sebagai jaring pengaman bila API gagal/timeout).
+
+**Catatan keamanan & biaya:**
+- Key **hanya dipakai di server** (`api/chat.js`), dikirim lewat header `x-goog-api-key` (bukan URL), dan **tidak pernah** ikut ter-bundel ke JS browser. Jangan tambahkan prefix `VITE_` pada variabel `GEMINI_*`.
+- Kunci tetap mengikuti *rate limit* bawaan (`/api/chat` maks. 12 pesan/menit/IP) sehingga key aman dari penyalahgunaan publik.
+- `gemini-2.5-flash` memiliki *free tier* yang cukup untuk traffic portofolio pribadi. Pantau pemakaian di Google AI Studio. Bila kuota habis/invalid, Relay otomatis kembali ke mode pengetahuan lokal (website tidak pernah error).
 
 ## Menjalankan Secara Lokal
 

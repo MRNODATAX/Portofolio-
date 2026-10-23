@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { buildPortfolioSystemPrompt, answerLocally } from '../shared/knowledge.mjs';
+import { askGemini, isGeminiConfigured } from '../shared/gemini.mjs';
 import {
   applyApiSecurityHeaders,
   isCrossSiteRequest,
@@ -50,7 +51,14 @@ export function extractAnswer(body) {
     body.content,
     body.choices?.[0]?.message?.content,
   ];
-  const answer = paths.find((x) => typeof x === 'string' && x.trim());
+  const geminiText = Array.isArray(body.candidates)
+    ? body.candidates
+        .map((c) => (Array.isArray(c?.content?.parts) ? c.content.parts.map((p) => (typeof p?.text === 'string' ? p.text : '')).join('') : ''))
+        .join('')
+        .trim()
+    : '';
+
+  const answer = paths.find((x) => typeof x === 'string' && x.trim()) || (geminiText ? geminiText : '');
   if (!answer || /<!doctype|<html[\s>]/i.test(answer)) return '';
   return answer.trim().slice(0, 12000);
 }
@@ -103,6 +111,13 @@ export default async function handler(req, res) {
     const systemPrompt = buildPortfolioSystemPrompt(siteData);
     const latestUserMessage = messages.at(-1).content;
 
+    // 1) Google Gemini (native) — aktif cukup dengan mengisi GEMINI_API_KEY.
+    if (isGeminiConfigured(process.env)) {
+      const gemini = await askGemini(systemPrompt, messages);
+      if (gemini.text) return res.status(200).json({ text: gemini.text, provider: 'gemini', model: gemini.model });
+    }
+
+    // 2) Provider OpenAI-compatible (OpenAI / Groq / OpenRouter / Ollama / Gemini compat layer).
     if (process.env.CHAT_API_KEY) {
       const apiUrl = process.env.CHAT_API_URL || 'https://api.openai.com/v1/chat/completions';
       if (isSafeExternalUpstreamUrl(apiUrl)) {
@@ -129,7 +144,7 @@ export default async function handler(req, res) {
           });
           const data = await response.json().catch(() => ({}));
           const text = extractAnswer(data);
-          if (response.ok && text) return res.status(200).json({ text });
+          if (response.ok && text) return res.status(200).json({ text, provider: 'upstream', model });
         } catch {
           // Fallback below
         } finally {
@@ -148,7 +163,7 @@ export default async function handler(req, res) {
         const response = await fetch(upstream, { method: 'GET', headers: { Accept: 'application/json' }, signal: abort.signal });
         const data = await response.json().catch(() => ({}));
         const text = extractAnswer(data);
-        if (response.ok && text) return res.status(200).json({ text });
+        if (response.ok && text) return res.status(200).json({ text, provider: 'webhook' });
       } catch {
         // Fallback below
       } finally {
@@ -156,8 +171,9 @@ export default async function handler(req, res) {
       }
     }
 
+    // 4) Tanpa API key apa pun → basis pengetahuan portofolio bawaan (tetap berjalan 100%).
     const fallbackText = answerLocally(latestUserMessage, siteData);
-    return res.status(200).json({ text: fallbackText });
+    return res.status(200).json({ text: fallbackText, provider: 'local' });
   } catch {
     return res.status(500).json({ error: 'Relay sedang tidak dapat merespons. Coba beberapa saat lagi.' });
   }
