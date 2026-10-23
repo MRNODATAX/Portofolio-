@@ -17,6 +17,8 @@ export default function AiSandbox() {
   const [copied, setCopied] = useState(-1);
   const [copyStatus, setCopyStatus] = useState('');
   const [online, setOnline] = useState(true);
+  const [aiProvider, setAiProvider] = useState('');
+  const [aiModel, setAiModel] = useState('');
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const controller = useRef<AbortController | null>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -40,6 +42,22 @@ export default function AiSandbox() {
   useEffect(() => {
     if (log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [messages, busy, error]);
+
+  // Menampilkan engine AI yang sedang aktif (Gemini / provider lain / pengetahuan lokal).
+  useEffect(() => {
+    let active = true;
+    fetch('/api/health', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (!active || !body) return;
+        setAiProvider(typeof body.aiProvider === 'string' ? body.aiProvider : '');
+        setAiModel(typeof body.aiModel === 'string' ? body.aiModel : '');
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function send(text: string, retry = false) {
     if (!text.trim() || lock.current || !online || (retry && messages.at(-1)?.role !== 'user')) return;
@@ -137,6 +155,17 @@ export default function AiSandbox() {
               <RelayMark />
               <span>Relay</span>
               <small>Personal AI</small>
+              {aiProvider && (
+                <small className="chat-engine" title={aiModel ? `Model: ${aiModel}` : undefined}>
+                  {aiProvider === 'gemini'
+                    ? `Gemini${aiModel ? ` · ${aiModel}` : ''}`
+                    : aiProvider === 'upstream'
+                      ? `LLM${aiModel ? ` · ${aiModel}` : ''}`
+                      : aiProvider === 'webhook'
+                        ? 'Webhook AI'
+                        : 'Pengetahuan lokal'}
+                </small>
+              )}
             </div>
             <button
               className="icon-button"

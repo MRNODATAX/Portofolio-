@@ -95,6 +95,8 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
 
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [ratingStats, setRatingStats] = useState({ count: 0, average: 0 });
+  const [aiProvider, setAiProvider] = useState('');
+  const [aiModel, setAiModel] = useState('');
   const importRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -149,6 +151,23 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
       void loadReviews();
     }
   }, [authenticated, tab]);
+
+  // Menampilkan engine AI yang sedang aktif pada tab Relay (Gemini / LLM lain / pengetahuan lokal).
+  useEffect(() => {
+    if (!authenticated) return;
+    let active = true;
+    fetch('/api/health', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (!active || !body) return;
+        setAiProvider(typeof body.aiProvider === 'string' ? body.aiProvider : '');
+        setAiModel(typeof body.aiModel === 'string' ? body.aiModel : '');
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [authenticated]);
 
   function updateDraft(updater: (prev: SiteData) => SiteData) {
     setDraft((prev) => {
@@ -2249,6 +2268,38 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                   <h2>06 — Relay Personal AI &amp; 08 — The Ethos</h2>
                   <p>Seluruh perubahan pada proyek, sertifikat, perjalanan, dan profil otomatis dipelajari oleh Relay AI setelah disimpan.</p>
                 </div>
+              </div>
+
+              <div className="admin-card">
+                <h3>Engine AI Relay (Google Gemini)</h3>
+                <p style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 10 }}>
+                  Status saat ini:{' '}
+                  <strong style={{ color: 'var(--ink)' }}>
+                    {aiProvider === 'gemini'
+                      ? `Gemini aktif${aiModel ? ` · ${aiModel}` : ''}`
+                      : aiProvider === 'upstream'
+                        ? `Provider LLM eksternal${aiModel ? ` · ${aiModel}` : ''}`
+                        : aiProvider === 'webhook'
+                          ? 'Webhook AI eksternal'
+                          : 'Mode pengetahuan lokal (tanpa API key)'}
+                  </strong>
+                </p>
+                <p style={{ fontSize: 11.5, color: 'var(--quiet)', lineHeight: 1.75 }}>
+                  API key <strong>tidak perlu</strong> dimasukkan di sini — cukup ditaruh di Environment Variable
+                  server, sehingga kunci tidak pernah terekspos ke browser:
+                  <br />
+                  1. Ambil key gratis di <strong>aistudio.google.com/apikey</strong>.
+                  <br />
+                  2. Vercel: <strong>Project → Settings → Environment Variables</strong> → tambah{' '}
+                  <code>GEMINI_API_KEY</code> (dan opsional <code>GEMINI_MODEL</code>, default{' '}
+                  <code>gemini-2.5-flash</code>) → <strong>Redeploy</strong>.
+                  <br />
+                  3. Lokal: salin <code>.env.example</code> → <code>.env</code>, isi variabel yang sama, lalu{' '}
+                  <code>npm run dev</code>.
+                  <br />
+                  Bila kuota habis atau API gagal, Relay otomatis kembali ke basis pengetahuan portofolio tanpa
+                  menampilkan error ke pengunjung.
+                </p>
               </div>
 
               <div className="admin-card">
