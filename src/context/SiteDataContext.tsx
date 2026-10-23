@@ -32,6 +32,12 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         if (!incoming.certificates || !Array.isArray(incoming.certificates.items)) {
           incoming.certificates = structuredClone(DEFAULT_DATA.certificates);
         }
+        if (!Array.isArray(incoming.identity?.heroCards)) {
+          incoming.identity.heroCards = structuredClone(DEFAULT_DATA.identity.heroCards);
+        }
+        if (!incoming.personal?.video) {
+          incoming.personal.video = structuredClone(DEFAULT_DATA.personal.video);
+        }
         setSiteData(incoming);
         if (body.storageMode) setStorageMode(body.storageMode);
       }

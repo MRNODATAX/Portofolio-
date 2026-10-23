@@ -72,13 +72,16 @@ export function isCrossSiteRequest(req) {
   return false;
 }
 
-export function sanitizeUrl(raw, { allowDataImage = false } = {}) {
+export function sanitizeUrl(raw, { allowDataImage = false, allowDataVideo = false } = {}) {
   if (typeof raw !== 'string') return '';
   const trimmed = raw.trim();
   if (!trimmed) return '';
   if (CONTROL_CHARS.test(trimmed)) return '';
 
   if (allowDataImage && /^data:image\/(webp|png|jpeg|jpg|gif);base64,[A-Za-z0-9+/=]+$/i.test(trimmed)) {
+    return trimmed;
+  }
+  if (allowDataVideo && /^data:video\/(mp4|webm);base64,[A-Za-z0-9+/=]+$/i.test(trimmed)) {
     return trimmed;
   }
 
@@ -147,6 +150,32 @@ export function verifyImageMagicBytes(buffer) {
     buffer[5] === 0x61
   ) {
     return { mime: 'image/gif', ext: 'gif' };
+  }
+
+  return null;
+}
+
+export function verifyVideoMagicBytes(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.byteLength < 12) return null;
+
+  // MP4 / ISO Base Media File Format: bytes 4..7 === 'ftyp' (66 74 79 70)
+  if (
+    buffer[4] === 0x66 &&
+    buffer[5] === 0x74 &&
+    buffer[6] === 0x79 &&
+    buffer[7] === 0x70
+  ) {
+    return { mime: 'video/mp4', ext: 'mp4' };
+  }
+
+  // WebM / Matroska EBML header: 1A 45 DF A3
+  if (
+    buffer[0] === 0x1a &&
+    buffer[1] === 0x45 &&
+    buffer[2] === 0xdf &&
+    buffer[3] === 0xa3
+  ) {
+    return { mime: 'video/webm', ext: 'webm' };
   }
 
   return null;

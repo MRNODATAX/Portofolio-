@@ -30,10 +30,19 @@ import './admin.css';
 import { INITIAL_SITE_DATA, useSiteData } from '../context/SiteDataContext';
 import { statusLabels } from '../data';
 import { useTheme } from '../hooks/useTheme';
-import type { AnimeCharacter, CertificateItem, JourneyStep, Project, SiteData, WorkStatus } from '../types';
+import type {
+  AnimeCharacter,
+  CertificateItem,
+  HeroStackCard,
+  JourneyStep,
+  Project,
+  SiteData,
+  WorkStatus,
+} from '../types';
 import { WorkCover } from '../components/Archive';
 import { Mark } from '../components/Primitives';
 import ImageField from './ImageField';
+import VideoField from './VideoField';
 
 type AdminTab = 'identity' | 'projects' | 'about' | 'journey' | 'ecosystem' | 'personal' | 'certificates' | 'relay' | 'footer';
 
@@ -147,6 +156,89 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
       return next;
     });
     setDirty(true);
+  }
+
+  /* ── CRUD kartu foto stack 3D di Hero ───────────────────────────────────── */
+  const heroCards: HeroStackCard[] = Array.isArray(draft.identity.heroCards) ? draft.identity.heroCards : [];
+
+  function defaultHeroCards(): HeroStackCard[] {
+    return [
+      {
+        id: 'portrait',
+        title: draft.identity.name || 'No_Data',
+        caption: draft.identity.heroStack?.portraitCaption || 'Fresh Graduate · Web & App Dev',
+        image: draft.identity.portraitImage || '/images/nodata-portrait.jpg',
+        focal: draft.identity.portraitFocal || 'center 42%',
+      },
+      {
+        id: 'work',
+        title: draft.identity.heroStack?.workTitle || 'Selected Works',
+        caption: 'Research. Build. Automate.',
+        image: draft.identity.heroStack?.workImage || '/components/works/repo-flow.svg',
+        focal: 'center',
+      },
+      {
+        id: 'personal',
+        title: draft.personal.anime[0]?.name || 'Alya Kujou',
+        caption: draft.identity.heroStack?.personalCaption || 'A little more me.',
+        image: draft.personal.anime[0]?.image || '/images/anime-v22/alya.jpg',
+        focal: draft.personal.anime[0]?.focal || '50% 18%',
+      },
+    ];
+  }
+
+  function addHeroCard() {
+    updateDraft((d) => {
+      const cards = Array.isArray(d.identity.heroCards) ? [...d.identity.heroCards] : [];
+      cards.push({
+        id: `hero-card-${Date.now().toString(36)}`,
+        title: 'Kartu Baru',
+        caption: 'Caption kartu baru',
+        image: '/images/nodata-portrait.jpg',
+        focal: '50% 30%',
+      });
+      d.identity.heroCards = cards;
+      return d;
+    });
+  }
+
+  function updateHeroCard(id: string, patch: Partial<HeroStackCard>) {
+    updateDraft((d) => {
+      const cards = Array.isArray(d.identity.heroCards) ? [...d.identity.heroCards] : [];
+      const idx = cards.findIndex((c) => c.id === id);
+      if (idx === -1) return d;
+      cards[idx] = { ...cards[idx], ...patch };
+      d.identity.heroCards = cards;
+      return d;
+    });
+  }
+
+  function removeHeroCard(id: string) {
+    updateDraft((d) => {
+      const cards = Array.isArray(d.identity.heroCards) ? [...d.identity.heroCards] : [];
+      if (cards.length <= 1) return d;
+      d.identity.heroCards = cards.filter((c) => c.id !== id);
+      return d;
+    });
+  }
+
+  function moveHeroCard(id: string, direction: -1 | 1) {
+    updateDraft((d) => {
+      const cards = Array.isArray(d.identity.heroCards) ? [...d.identity.heroCards] : [];
+      const idx = cards.findIndex((c) => c.id === id);
+      const target = idx + direction;
+      if (idx === -1 || target < 0 || target >= cards.length) return d;
+      [cards[idx], cards[target]] = [cards[target], cards[idx]];
+      d.identity.heroCards = cards;
+      return d;
+    });
+  }
+
+  function resetHeroCards() {
+    updateDraft((d) => {
+      d.identity.heroCards = defaultHeroCards();
+      return d;
+    });
   }
 
   async function handleLogin(e: FormEvent) {
@@ -963,7 +1055,7 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                     previewAspect="square"
                   />
                   <ImageField
-                    label="Foto Utama Hero (Kartu 01 pada 3D Glass Stack)"
+                    label="Foto Utama Hero (fallback bila daftar kartu di bawah kosong)"
                     value={draft.identity.portraitImage}
                     onChange={(url) => updateDraft((d) => ({ ...d, identity: { ...d.identity, portraitImage: url } }))}
                     focal={draft.identity.portraitFocal}
@@ -1072,10 +1164,125 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                           identity: { ...d.identity, heroStack: { ...d.identity.heroStack, portraitCaption: e.target.value } },
                         }))
                       }
-                      placeholder="Caption Kartu 01"
+                      placeholder="Caption Kartu 01 (default stack)"
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="admin-card">
+                <div className="admin-card-head" style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div>
+                    <h3>Kartu Foto Stack 3D Hero ({heroCards.length} kartu)</h3>
+                    <p style={{ color: 'var(--quiet)', fontSize: 11.5, margin: '4px 0 0', lineHeight: 1.6 }}>
+                      Tambah, edit, urutkan, atau hapus foto di tumpukan kaca Hero. Kartu pertama adalah yang tampil
+                      paling depan saat pengunjung membuka website.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button type="button" className="admin-btn admin-btn-sm" onClick={addHeroCard}>
+                      <Plus size={14} />
+                      Tambah Kartu
+                    </button>
+                    <button type="button" className="admin-btn admin-btn-sm" onClick={resetHeroCards}>
+                      <RotateCcw size={13} />
+                      Reset ke 3 Kartu Bawaan
+                    </button>
+                  </div>
+                </div>
+
+                {heroCards.length === 0 && (
+                  <p style={{ fontSize: 12, color: 'var(--muted)' }}>
+                    Belum ada kartu. Klik <strong>Tambah Kartu</strong> atau <strong>Reset ke 3 Kartu Bawaan</strong>.
+                  </p>
+                )}
+
+                {heroCards.map((card, idx) => (
+                  <div
+                    key={card.id}
+                    style={{
+                      border: '1px solid var(--line)',
+                      borderRadius: 8,
+                      padding: 14,
+                      marginTop: 12,
+                      background: 'var(--surface-2)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 10,
+                        marginBottom: 10,
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <strong style={{ fontSize: 12, letterSpacing: 0.6 }}>
+                        KARTU {String(idx + 1).padStart(2, '0')}
+                        {idx === 0 ? ' — TAMPIL DI DEPAN' : ''}
+                      </strong>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-sm"
+                          disabled={idx === 0}
+                          onClick={() => moveHeroCard(card.id, -1)}
+                          aria-label={`Naikkan kartu ${idx + 1}`}
+                        >
+                          <ArrowUp size={13} />
+                          Naik
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-sm"
+                          disabled={idx === heroCards.length - 1}
+                          onClick={() => moveHeroCard(card.id, 1)}
+                          aria-label={`Turunkan kartu ${idx + 1}`}
+                        >
+                          <ArrowDown size={13} />
+                          Turun
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-sm admin-btn-danger"
+                          disabled={heroCards.length <= 1}
+                          onClick={() => removeHeroCard(card.id)}
+                          aria-label={`Hapus kartu ${idx + 1}`}
+                        >
+                          <Trash2 size={13} />
+                          Hapus
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="admin-grid-2">
+                      <div className="admin-field">
+                        <label>Judul Kartu</label>
+                        <input value={card.title} onChange={(e) => updateHeroCard(card.id, { title: e.target.value })} />
+                      </div>
+                      <div className="admin-field">
+                        <label>Caption Kartu</label>
+                        <input
+                          value={card.caption}
+                          onChange={(e) => updateHeroCard(card.id, { caption: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <ImageField
+                      label={`Foto Kartu ${String(idx + 1).padStart(2, '0')}`}
+                      value={card.image}
+                      onChange={(url) => updateHeroCard(card.id, { image: url })}
+                      focal={card.focal || '50% 30%'}
+                      onFocalChange={(focal) => updateHeroCard(card.id, { focal })}
+                      token={token}
+                      previewAspect="portrait"
+                      showWorkPresets
+                      fallbackSrc="/images/nodata-portrait.jpg"
+                    />
+                  </div>
+                ))}
               </div>
             </>
           )}
@@ -1734,7 +1941,7 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                     />
                   </div>
                   <div className="admin-field">
-                    <label>URL Video MP4</label>
+                    <label>Sumber Video MP4</label>
                     <input
                       value={draft.personal.video.url}
                       onChange={(e) =>
@@ -1743,9 +1950,37 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                           personal: { ...d.personal, video: { ...d.personal.video, url: e.target.value } },
                         }))
                       }
+                      placeholder="/images/uploads/video.mp4 atau https://.../video.mp4"
                     />
                   </div>
                 </div>
+
+                <VideoField
+                  url={draft.personal.video.url}
+                  poster={draft.personal.video.poster || '/posters/cote.webp'}
+                  rotation={draft.personal.video.rotation ?? 0}
+                  fit={draft.personal.video.fit === 'contain' ? 'contain' : 'cover'}
+                  token={token}
+                  onChange={(patch) =>
+                    updateDraft((d) => ({
+                      ...d,
+                      personal: { ...d.personal, video: { ...d.personal.video, ...patch } },
+                    }))
+                  }
+                />
+
+                <ImageField
+                  label="Poster / Thumbnail Video (tampil sebelum video play)"
+                  value={draft.personal.video.poster || '/posters/cote.webp'}
+                  onChange={(url) =>
+                    updateDraft((d) => ({
+                      ...d,
+                      personal: { ...d.personal, video: { ...d.personal.video, poster: url } },
+                    }))
+                  }
+                  token={token}
+                  previewAspect="landscape"
+                />
                 <div className="admin-field" style={{ marginTop: 10 }}>
                   <label>Caption Kings &amp; Queen</label>
                   <textarea

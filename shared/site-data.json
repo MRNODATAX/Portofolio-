@@ -27,7 +27,30 @@
       "workCaption": "Research. Build. Automate.",
       "workImage": "/components/works/repo-flow.svg",
       "personalCaption": "A little more me."
-    }
+    },
+    "heroCards": [
+      {
+        "id": "portrait",
+        "title": "No_Data",
+        "caption": "Fresh Graduate · Web & App Dev",
+        "image": "/images/nodata-portrait.jpg",
+        "focal": "center 42%"
+      },
+      {
+        "id": "work",
+        "title": "Selected Works",
+        "caption": "Research. Build. Automate.",
+        "image": "/components/works/repo-flow.svg",
+        "focal": "center"
+      },
+      {
+        "id": "personal",
+        "title": "Alya Kujou",
+        "caption": "A little more me.",
+        "image": "/images/anime-v22/alya.jpg",
+        "focal": "50% 18%"
+      }
+    ]
   },
   "about": {
     "chapterTitle": "BEYOND THE CODE",
@@ -763,7 +786,8 @@
     "video": {
       "url": "https://res.cloudinary.com/dhxfke7kq/video/upload/v1791439342/Ssstt/wnudrzps2bdshrcyykkw.mp4",
       "poster": "/posters/cote.webp",
-      "rotation": -90,
+      "rotation": 270,
+      "fit": "cover",
       "title": "Classroom of the Elite"
     },
     "royal": {

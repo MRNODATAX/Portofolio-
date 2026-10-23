@@ -1,49 +1,72 @@
-import { useRef, useState, type PointerEvent } from 'react';
+import { useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { ArrowUpRight, Braces, Layers3 } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
+import type { HeroStackCard } from '../types';
 
 export default function Scene({ paused = false }: { mode?: 'hero'; paused?: boolean }) {
   const { siteData } = useSiteData();
   const { identity, archive, personal } = siteData;
   const favAnime = personal.anime[0];
 
-  const photos = [
-    {
-      id: 'portrait',
-      src: identity.portraitImage || '/images/nodata-portrait.jpg',
-      alt: `Foto ${identity.fullName} (${identity.name})`,
-      title: identity.name,
-      caption: identity.heroStack?.portraitCaption || 'Fresh Graduate · Web & App Dev',
-      focal: identity.portraitFocal || 'center 42%',
-      width: 768,
-      height: 1376,
-    },
-    {
-      id: 'work',
-      src: identity.heroStack?.workImage || '/components/works/repo-flow.svg',
-      alt: `Ilustrasi karya pilihan ${identity.name}`,
-      title: identity.heroStack?.workTitle || 'Selected Works',
-      caption: `${archive.projects.length} karya & eksperimen`,
-      focal: 'center',
-      width: 820,
-      height: 500,
-    },
-    {
-      id: 'personal',
-      src: favAnime?.image || '/images/anime-v22/alya.jpg',
-      alt: favAnime?.name || 'Alya Kujou',
-      title: favAnime?.name || 'Alya Kujou',
-      caption: identity.heroStack?.personalCaption || 'A little more me.',
-      focal: favAnime?.focal || '50% 18%',
-      width: 736,
-      height: 1226,
-    },
-  ];
+  // Kartu stack hero sepenuhnya dinamis dan dikelola dari panel /admin (bisa tambah, edit, urutkan, hapus).
+  const photos = useMemo(() => {
+    const cards = Array.isArray(identity.heroCards) ? identity.heroCards.filter((c) => c?.image) : [];
+    const source: HeroStackCard[] =
+      cards.length > 0
+        ? cards
+        : [
+            {
+              id: 'portrait',
+              title: identity.name,
+              caption: identity.heroStack?.portraitCaption || 'Fresh Graduate · Web & App Dev',
+              image: identity.portraitImage || '/images/nodata-portrait.jpg',
+              focal: identity.portraitFocal || 'center 42%',
+            },
+            {
+              id: 'work',
+              title: identity.heroStack?.workTitle || 'Selected Works',
+              caption: `${archive.projects.length} karya & eksperimen`,
+              image: identity.heroStack?.workImage || '/components/works/repo-flow.svg',
+              focal: 'center',
+            },
+            {
+              id: 'personal',
+              title: favAnime?.name || 'Alya Kujou',
+              caption: identity.heroStack?.personalCaption || 'A little more me.',
+              image: favAnime?.image || '/images/anime-v22/alya.jpg',
+              focal: favAnime?.focal || '50% 18%',
+            },
+          ];
+
+    return source.map((card) => {
+      const isPortraitCard = card.id === 'portrait';
+      const isSvg = /\.svg(\?|#|$)/i.test(card.image);
+      return {
+        id: card.id,
+        kind: isPortraitCard ? 'portrait-original' : 'portrait-art',
+        src: card.image,
+        alt: isPortraitCard ? `Foto ${identity.fullName} (${identity.name})` : card.title,
+        title: card.title,
+        caption: card.caption,
+        focal: card.focal || (isPortraitCard ? 'center 42%' : '50% 30%'),
+        width: isPortraitCard ? 768 : isSvg ? 820 : 736,
+        height: isPortraitCard ? 1376 : isSvg ? 500 : 1226,
+      };
+    });
+  }, [identity, archive.projects.length, favAnime]);
 
   const ref = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(false);
-  const [order, setOrder] = useState([0, 1, 2]);
+  const [stackOrder, setStackOrder] = useState<number[] | null>(null);
   const gesture = useRef<{ x: number; y: number } | null>(null);
+
+  // Urutan stack mengikuti jumlah kartu aktif (aman saat kartu ditambah / dihapus dari /admin).
+  const order = useMemo(() => {
+    const base = Array.from({ length: photos.length }, (_, i) => i);
+    if (!stackOrder) return base;
+    const kept = stackOrder.filter((i) => i >= 0 && i < photos.length);
+    return [...kept, ...base.filter((i) => !kept.includes(i))];
+  }, [photos.length, stackOrder]);
   const suppressClick = useRef(0);
 
   function cycle(direction: number, focus = false) {
@@ -67,7 +90,7 @@ export default function Scene({ paused = false }: { mode?: 'hero'; paused?: bool
     }
   }
   function choose(index: number) {
-    setOrder((current) => [index, ...current.filter((i) => i !== index)]);
+    setStackOrder([index, ...order.filter((i) => i !== index)]);
   }
   function tilt(e: PointerEvent<HTMLDivElement>) {
     if (paused || e.pointerType !== 'mouse') return;
@@ -83,6 +106,8 @@ export default function Scene({ paused = false }: { mode?: 'hero'; paused?: bool
   }
 
   const exploringLines = (identity.heroExploringText || 'Web, App & AI\nBot Automation').split('\n');
+
+  if (photos.length === 0) return null;
 
   return (
     <div
@@ -106,15 +131,19 @@ export default function Scene({ paused = false }: { mode?: 'hero'; paused?: bool
       <div className="portrait-assembly">
         {photos.map((photo, index) => {
           const slot = order.indexOf(index);
+          const backplateKind = slot === 1 ? 'backplate-work' : slot === 2 ? 'backplate-personal' : 'backplate-extra';
+          // Kartu ke-4 dst. dikipas bergantian ke kanan/kiri agar tumpukan tetap seimbang.
+          const fan = slot >= 3 ? (slot % 2 === 1 ? 1 : -1) * Math.ceil((slot - 2) / 2) : 0;
           return (
             <button
               type="button"
               key={photo.id}
               className={`portrait-sheet ${
-                slot === 0 ? 'portrait-glass' : `portrait-backplate ${slot === 1 ? 'backplate-work' : 'backplate-personal'}`
+                slot === 0 ? 'portrait-glass' : `portrait-backplate ${backplateKind}`
               }`}
               data-slot={slot}
               data-photo-index={index}
+              style={{ zIndex: Math.max(1, 10 - slot), ['--fan' as string]: fan } as CSSProperties}
               aria-label={`${slot === 0 ? 'Gambar utama:' : 'Tampilkan di depan:'} ${photo.title}`}
               aria-pressed={slot === 0}
               onClick={() => choose(index)}
@@ -125,7 +154,7 @@ export default function Scene({ paused = false }: { mode?: 'hero'; paused?: bool
                 }
               }}
             >
-              <div className={`portrait-window ${photo.id === 'portrait' ? 'portrait-original' : 'portrait-art'}`}>
+              <div className={`portrait-window ${photo.kind}`}>
                 <img
                   src={photo.src}
                   alt={photo.alt}

@@ -81,6 +81,14 @@ export interface CertificateItem {
   credentialUrl?: string;
 }
 
+export interface HeroStackCard {
+  id: string;
+  title: string;
+  caption: string;
+  image: string;
+  focal: string;
+}
+
 export interface SiteData {
   identity: {
     name: string;
@@ -111,6 +119,7 @@ export interface SiteData {
       workImage: string;
       personalCaption: string;
     };
+    heroCards: HeroStackCard[];
   };
   about: {
     chapterTitle: string;
@@ -157,6 +166,7 @@ export interface SiteData {
       url: string;
       poster: string;
       rotation: number;
+      fit?: 'cover' | 'contain';
       title: string;
     };
     royal: {
