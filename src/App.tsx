@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Menu, Braces, Cpu, Lock, Pause, Play, Sun, Moon, LoaderCircle } from 'lucide-react';
 import { useSiteData } from './context/SiteDataContext';
 import { Chapter, ExternalLink, Mark, Modal } from './components/Primitives';
@@ -21,10 +21,16 @@ import { useTheme } from './hooks/useTheme';
 
 const AdminStudio = lazy(() => import('./admin/AdminStudio'));
 
+/**
+ * Urutan tautan HARUS sama dengan urutan section yang dirender di halaman
+ * (Hero → Work/Archive → About → Journey → Tools → Waifu → Relay → Sertifikat →
+ * Ethos → Kesan → Contact). Dulu "About" ditaruh sebelum "Work", sehingga navbar
+ * melompat mundur dan nomor di menu mobile tidak berurutan dengan isi halaman.
+ */
 const links = [
   { id: 'home', name: 'Home' },
-  { id: 'about', name: 'About' },
   { id: 'archive', name: 'Work' },
+  { id: 'about', name: 'About' },
   { id: 'journey', name: 'Journey' },
   { id: 'ecosystem', name: 'Tools' },
   { id: 'universe', name: 'Waifu' },
@@ -34,6 +40,9 @@ const links = [
   { id: 'rating', name: 'Kesan' },
   { id: 'contact', name: 'Contact' },
 ];
+
+/** Enam bagian yang ditampilkan pada navbar desktop; urutannya mengikuti DOM. */
+const DESKTOP_NAV_IDS = ['home', 'archive', 'about', 'universe', 'certificates', 'contact'];
 
 function checkIsAdminRoute() {
   if (typeof window === 'undefined') return false;
@@ -50,6 +59,47 @@ export default function App() {
   const { theme, toggle } = useTheme();
   const [menu, setMenu] = useState(false);
   const [current, setCurrent] = useState('home');
+  const [navLinks, setNavLinks] = useState(links);
+
+  /**
+   * Pengaman: urutkan ulang tautan sesuai posisi section di DOM. Bila suatu saat
+   * urutan <section> diubah, navbar dan nomor menu mobile mengikuti otomatis —
+   * tidak perlu mengingat untuk menyunting daftar ini secara manual.
+   */
+  useEffect(() => {
+    if (isAdmin) return;
+    const inDom: { link: (typeof links)[number]; el: HTMLElement }[] = [];
+    for (const link of links) {
+      const el = document.getElementById(link.id);
+      if (el) inDom.push({ link, el });
+    }
+    inDom.sort((a, b) => {
+      const relation = a.el.compareDocumentPosition(b.el);
+      if (relation & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+      if (relation & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+      return 0;
+    });
+    const ordered = inDom.map((entry) => entry.link);
+    const notRendered = links.filter((l) => !ordered.some((o) => o.id === l.id));
+    setNavLinks([...ordered, ...notRendered]);
+  }, [isAdmin]);
+
+  /**
+   * Bagian yang tidak masuk navbar (Journey, Tools, Relay, Ethos, Kesan) membuat
+   * penanda aktif menghilang bila hanya memakai `current`. Karena itu penanda
+   * diturunkan ke tautan navbar terakhir yang posisinya sebelumnya — navbar
+   * selalu menunjukkan "kita sedang di sekitar mana".
+   */
+  const activeNavId = useMemo(() => {
+    if (!current) return 'home';
+    if (DESKTOP_NAV_IDS.includes(current)) return current;
+    let fallback = 'home';
+    for (const l of navLinks) {
+      if (l.id === current) break;
+      if (DESKTOP_NAV_IDS.includes(l.id)) fallback = l.id;
+    }
+    return fallback;
+  }, [current, navLinks]);
   const still = reduced || motionPaused;
 
   useExperience(!still && !isAdmin);
@@ -125,14 +175,14 @@ export default function App() {
             <span>{identity.name}</span>
           </a>
           <nav className="desktop-nav" aria-label="Navigasi utama">
-            {links
-              .filter((l) => ['home', 'about', 'archive', 'certificates', 'universe', 'contact'].includes(l.id))
+            {navLinks
+              .filter((l) => DESKTOP_NAV_IDS.includes(l.id))
               .map((l) => (
                 <a
-                  className={current === l.id ? 'nav-active' : ''}
+                  className={activeNavId === l.id ? 'nav-active' : ''}
                   href={`#${l.id}`}
                   key={l.id}
-                  aria-current={current === l.id ? 'location' : undefined}
+                  aria-current={activeNavId === l.id ? 'location' : undefined}
                 >
                   {l.name}
                 </a>
@@ -171,15 +221,21 @@ export default function App() {
         <Modal label="Menu navigasi" onClose={() => setMenu(false)} className="navigation-modal">
           <p className="eyebrow">{identity.name.toUpperCase()} / EXPLORE THE ARCHIVE</p>
           <nav aria-label="Semua bagian">
-            {links.map((l, i) => (
-              <a key={l.id} href={`#${l.id}`} onClick={() => setMenu(false)}>
+            {navLinks.map((l, i) => (
+              <a
+                key={l.id}
+                href={`#${l.id}`}
+                className={activeNavId === l.id ? 'nav-active' : ''}
+                aria-current={activeNavId === l.id ? 'location' : undefined}
+                onClick={() => setMenu(false)}
+              >
                 <span>{String(i + 1).padStart(2, '0')}</span>
                 {l.name}
                 <ArrowUpRight size={22} />
               </a>
             ))}
             <a href="/admin" onClick={openAdmin}>
-              <span>{String(links.length + 1).padStart(2, '0')}</span>
+              <span>{String(navLinks.length + 1).padStart(2, '0')}</span>
               Admin Studio
               <Lock size={18} />
             </a>
