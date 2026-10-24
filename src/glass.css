@@ -509,3 +509,18 @@ html[data-motion=off] .work-visual-button{transform:none}
   .communities{grid-template-columns:1fr}
   .community-heading{flex-direction:column;align-items:flex-start;gap:10px;margin:40px 0 18px}
 }
+
+/* Backsound: tombol di header + bar ekualiser saat musik menyala. */
+.sound-toggle{position:relative}
+.sound-toggle.sound-on{color:var(--accent)}
+.sound-toggle.sound-blocked{color:var(--quiet);animation:sound-nudge 1.6s ease-in-out 2}
+.sound-eq{display:flex;align-items:flex-end;gap:2px;height:16px}
+.sound-eq i{width:2px;height:5px;background:currentColor;border-radius:1px;animation:sound-bar .9s ease-in-out infinite}
+.sound-eq i:nth-child(2){animation-delay:.18s;height:12px}
+.sound-eq i:nth-child(3){animation-delay:.36s;height:8px}
+@keyframes sound-bar{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+@keyframes sound-nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.nav-sound-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.nav-sound-row .sound-toggle{border:1px solid var(--line-strong);border-radius:8px}
+.nav-sound-label{font-size:14px;color:var(--muted)}
+@media(prefers-reduced-motion:reduce){.sound-eq i{animation:none;height:9px}.sound-toggle.sound-blocked{animation:none}}

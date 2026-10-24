@@ -181,6 +181,58 @@ export function verifyVideoMagicBytes(buffer) {
   return null;
 }
 
+/**
+ * Memverifikasi bahwa buffer benar-benar berkas audio (bukan file lain yang
+ * diganti ekstensinya). Dipakai sebelum berkas backsound disimpan ke Storage.
+ */
+export function verifyAudioMagicBytes(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.byteLength < 12) return null;
+
+  // MP3 dengan tag ID3v2: "ID3" (49 44 33)
+  if (buffer[0] === 0x49 && buffer[1] === 0x44 && buffer[2] === 0x33) {
+    return { mime: 'audio/mpeg', ext: 'mp3' };
+  }
+
+  // MP3 tanpa tag: frame sync 11 bit (FF Ex/E6/E8/EA/F2/F6/F8/FA/FB/…)
+  if (
+    buffer[0] === 0xff &&
+    (buffer[1] === 0xfb || buffer[1] === 0xf3 || buffer[1] === 0xf2 || buffer[1] === 0xfa || buffer[1] === 0xe3)
+  ) {
+    return { mime: 'audio/mpeg', ext: 'mp3' };
+  }
+
+  // MP4 / M4A: bytes 4..7 === 'ftyp' (66 74 79 70)
+  if (buffer[4] === 0x66 && buffer[5] === 0x74 && buffer[6] === 0x79 && buffer[7] === 0x70) {
+    return { mime: 'audio/mp4', ext: 'm4a' };
+  }
+
+  // Ogg (OggS): 4F 67 67 53
+  if (buffer[0] === 0x4f && buffer[1] === 0x67 && buffer[2] === 0x67 && buffer[3] === 0x53) {
+    return { mime: 'audio/ogg', ext: 'ogg' };
+  }
+
+  // WAV: RIFF....WAVE
+  if (
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x41 &&
+    buffer[10] === 0x56 &&
+    buffer[11] === 0x45
+  ) {
+    return { mime: 'audio/wav', ext: 'wav' };
+  }
+
+  // FLAC: "fLaC" (66 4C 61 43)
+  if (buffer[0] === 0x66 && buffer[1] === 0x4c && buffer[2] === 0x61 && buffer[3] === 0x43) {
+    return { mime: 'audio/flac', ext: 'flac' };
+  }
+
+  return null;
+}
+
 export function isSafeExternalUpstreamUrl(rawUrl) {
   try {
     const parsed = new URL(String(rawUrl));

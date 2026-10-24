@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sanitizeUrl, verifyImageMagicBytes, verifyVideoMagicBytes } from './security.mjs';
+import { sanitizeUrl, verifyAudioMagicBytes, verifyImageMagicBytes, verifyVideoMagicBytes } from './security.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SITE_DATA_PATH = join(__dirname, 'site-data.json');
@@ -247,6 +247,17 @@ export function sanitizeSiteDataUrls(candidate) {
   if (candidate.personal?.royal?.image) {
     candidate.personal.royal.image = sanitizeUrl(candidate.personal.royal.image, { allowDataImage: true });
   }
+  // Backsound: hanya izinkan URL aman (relatif / http(s)) — data URL audio sengaja
+  // ditolak agar berkas CMS tidak membengkak puluhan megabyte.
+  if (candidate.sound) {
+    if (typeof candidate.sound.url === 'string') {
+      candidate.sound.url = sanitizeUrl(candidate.sound.url);
+    }
+    const vol = Number(candidate.sound.volume);
+    if (!Number.isFinite(vol)) candidate.sound.volume = INITIAL_SEED.sound.volume;
+    candidate.sound.volume = Math.min(1, Math.max(0, Number(candidate.sound.volume) || 0));
+  }
+
   if (candidate.personal?.video) {
     if (candidate.personal.video.poster) {
       candidate.personal.video.poster = sanitizeUrl(candidate.personal.video.poster, { allowDataImage: true });
@@ -300,6 +311,20 @@ export function normalizeSiteData(candidate) {
   }
   if (candidate.relay && !candidate.relay.aiModel) {
     candidate.relay.aiModel = INITIAL_SEED.relay.aiModel;
+  }
+  // Migrasi: pengaturan backsound / musik latar (sound).
+  if (!candidate.sound || typeof candidate.sound !== 'object') {
+    candidate.sound = structuredClone(INITIAL_SEED.sound);
+  } else {
+    const seed = INITIAL_SEED.sound;
+    if (typeof candidate.sound.enabled !== 'boolean') candidate.sound.enabled = seed.enabled;
+    if (typeof candidate.sound.url !== 'string') candidate.sound.url = '';
+    if (typeof candidate.sound.title !== 'string') candidate.sound.title = seed.title;
+    if (typeof candidate.sound.label !== 'string') candidate.sound.label = seed.label;
+    const vol = Number(candidate.sound.volume);
+    candidate.sound.volume = Number.isFinite(vol) ? Math.min(1, Math.max(0, vol)) : seed.volume;
+    if (typeof candidate.sound.autoStart !== 'boolean') candidate.sound.autoStart = seed.autoStart;
+    if (typeof candidate.sound.pauseVideo !== 'boolean') candidate.sound.pauseVideo = seed.pauseVideo;
   }
   // Jaga-jaga: hapus field rahasia bila pernah terselip ke data CMS.
   if (candidate.relay) {
@@ -447,15 +472,18 @@ export async function saveSiteData(nextData) {
 }
 
 export async function saveUploadedAsset({ filename = 'image.webp', dataUrl = '' }) {
-  if (typeof dataUrl !== 'string' || !/^data:(image|video)\//.test(dataUrl)) {
-    throw new Error('Format berkas tidak valid. Gunakan gambar (PNG/JPG/WebP/GIF) atau video (MP4/WebM).');
+  if (typeof dataUrl !== 'string' || !/^data:(image|video|audio)\//.test(dataUrl)) {
+    throw new Error(
+      'Format berkas tidak valid. Gunakan gambar (PNG/JPG/WebP/GIF), video (MP4/WebM), atau audio (MP3/M4A/OGG/WAV/FLAC).'
+    );
   }
-  const match = dataUrl.match(/^data:((?:image|video)\/[a-zA-Z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/);
+  const match = dataUrl.match(/^data:((?:image|video|audio)\/[a-zA-Z0-9+.-]+);base64,([A-Za-z0-9+/=]+)$/);
   if (!match) {
     throw new Error('Data base64 tidak valid.');
   }
   const declaredMime = match[1].toLowerCase();
   const isVideo = declaredMime.startsWith('video/');
+  const isAudio = declaredMime.startsWith('audio/');
   if (declaredMime === 'image/svg+xml' || declaredMime.includes('svg')) {
     throw new Error('Demi keamanan (anti-XSS), unggahan file SVG tidak diizinkan. Gunakan PNG, JPG, atau WebP.');
   }
@@ -466,21 +494,35 @@ export async function saveUploadedAsset({ filename = 'image.webp', dataUrl = '' 
   // uploads only stay reliable below 4 MB. Anything bigger should be pushed to
   // Supabase Storage / Cloudinary and referenced by URL.
   const localFs = isFilesystemWritable();
-  const maxBytes = isVideo ? (localFs ? 64 * 1024 * 1024 : 4 * 1024 * 1024) : 4.5 * 1024 * 1024;
+  const maxBytes = isVideo
+    ? localFs
+      ? 64 * 1024 * 1024
+      : 4 * 1024 * 1024
+    : isAudio
+      ? 3 * 1024 * 1024 // backsound: batas aman untuk body serverless (base64 membengkak ~33%)
+      : 4.5 * 1024 * 1024;
   if (buffer.byteLength > maxBytes) {
     throw new Error(
       isVideo
         ? `Ukuran video maksimal ${Math.floor(maxBytes / (1024 * 1024))} MB untuk upload langsung. Untuk video lebih besar, unggah ke Supabase Storage / Cloudinary lalu tempel URL-nya di kolom "URL Video MP4".`
-        : 'Ukuran gambar maksimal 4.5 MB.'
+        : isAudio
+          ? `Ukuran audio maksimal ${Math.floor(maxBytes / (1024 * 1024))} MB. Kompres dulu (mis. 128 kbps, potong bagian yang dipakai) supaya muat unggahan langsung.`
+          : 'Ukuran gambar maksimal 4.5 MB.'
     );
   }
 
-  const verified = isVideo ? verifyVideoMagicBytes(buffer) : verifyImageMagicBytes(buffer);
+  const verified = isVideo
+    ? verifyVideoMagicBytes(buffer)
+    : isAudio
+      ? verifyAudioMagicBytes(buffer)
+      : verifyImageMagicBytes(buffer);
   if (!verified) {
     throw new Error(
       isVideo
         ? 'Header biner video tidak valid. Gunakan file MP4 (.mp4) atau WebM (.webm) asli.'
-        : 'Header biner gambar tidak valid. Gunakan file PNG, JPG, WebP, atau GIF asli.'
+        : isAudio
+          ? 'Header biner audio tidak valid. Gunakan file MP3 (.mp3), M4A (.m4a), OGG (.ogg), WAV (.wav), atau FLAC (.flac) asli.'
+          : 'Header biner gambar tidak valid. Gunakan file PNG, JPG, WebP, atau GIF asli.'
     );
   }
 

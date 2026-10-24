@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
+import {
+  announceVideoAudioOn,
+  onMusicStart,
+  onMusicStop,
+} from '../lib/audioBus';
 
 /**
  * The banner frame is a fixed 16:9 landscape window (see `.video-banner` in glass.css).
@@ -24,6 +29,7 @@ function normalizeRotation(raw: unknown) {
 export default function VideoPlayer() {
   const { siteData } = useSiteData();
   const VIDEO = siteData.personal.video;
+  const soundSettings = siteData.sound;
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const visible = useRef(false);
@@ -33,6 +39,9 @@ export default function VideoPlayer() {
   const [title, setTitle] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState(false);
+  // Apakah video sedang diputar sebelum backsound dinyalakan (untuk dipulihkan nanti).
+  const resumeAfterMusic = useRef(false);
+  const musicHolding = useRef(false);
   const rotation = normalizeRotation(VIDEO?.rotation);
   // Putaran seperempat (90° / 270°) berarti sumber video vertikal: kotak elemennya
   // harus ditukar (lebar ↔ tinggi) supaya hasilnya pas mengisi jendela 16:9.
@@ -53,6 +62,37 @@ export default function VideoPlayer() {
     setPlaying(false);
   }, [VIDEO?.url]);
 
+  /* ── Koordinasi dengan backsound: musik menyala → video dijeda & dibisukan ── */
+  useEffect(() => {
+    if (!soundSettings.pauseVideo) {
+      return () => {};
+    }
+    const pauseForMusic = () => {
+      const el = video.current;
+      if (!el) return;
+      resumeAfterMusic.current = !el.paused;
+      musicHolding.current = true;
+      el.pause();
+      el.muted = true;
+      setMuted(true);
+      setPlaying(false);
+    };
+    const resumeAfterMusicStop = () => {
+      const el = video.current;
+      musicHolding.current = false;
+      if (!el || !resumeAfterMusic.current) return;
+      resumeAfterMusic.current = false;
+      if (!visible.current || document.hidden) return;
+      void el.play().catch(() => {});
+    };
+    const offStart = onMusicStart(pauseForMusic);
+    const offStop = onMusicStop(resumeAfterMusicStop);
+    return () => {
+      offStart();
+      offStop();
+    };
+  }, [soundSettings.pauseVideo]);
+
   function reveal() {
     clearTimeout(hide.current);
     setTitle(true);
@@ -66,6 +106,11 @@ export default function VideoPlayer() {
       if (visible.current && !document.hidden) void el.play().catch(() => {});
     }
     setMuted(next);
+    // Maksimal satu sumber bunyi: saat audio video dinyalakan, backsound berhenti.
+    if (!next) {
+      musicHolding.current = false;
+      announceVideoAudioOn();
+    }
     reveal();
   }
 
@@ -75,6 +120,8 @@ export default function VideoPlayer() {
     if (!el || !VIDEO?.url) return;
     const resume = () => {
       if (!visible.current || document.hidden) return;
+      // Backsound sedang menyala → video tetap dijeda sampai musik dimatikan.
+      if (musicHolding.current) return;
       if (el.getAttribute('src') !== VIDEO.url) {
         el.src = VIDEO.url;
         el.load();
@@ -97,6 +144,7 @@ export default function VideoPlayer() {
     const gesture = () => {
       if (el.paused) resume();
     };
+    if (musicHolding.current) el.pause();
     document.addEventListener('visibilitychange', change);
     surface?.addEventListener('pointerdown', gesture);
     return () => {
