@@ -13,6 +13,7 @@ import SplashScreen from './components/SplashScreen';
 import AiSandbox from './components/AiSandbox';
 import RelayBubble from './components/RelayBubble';
 import Certificates from './components/Certificates';
+import SoundToggle from './components/SoundToggle';
 import Personal from './components/Personal';
 import { useMotion } from './hooks/useMotion';
 import { useExperience } from './hooks/useExperience';
@@ -41,7 +42,7 @@ function checkIsAdminRoute() {
 
 export default function App() {
   const { siteData } = useSiteData();
-  const { identity, about, archive, ecosystem, ethos, footer } = siteData;
+  const { identity, about, archive, ecosystem, ethos, footer, sound } = siteData;
 
   const [isAdmin, setIsAdmin] = useState(checkIsAdminRoute);
   const reduced = useMotion();
@@ -153,6 +154,7 @@ export default function App() {
             >
               {motionPaused ? <Play size={16} /> : <Pause size={16} />}
             </button>
+            <SoundToggle />
             <button
               className="menu-button"
               onClick={() => setMenu(true)}
@@ -182,6 +184,12 @@ export default function App() {
               <Lock size={18} />
             </a>
           </nav>
+          {sound?.enabled && sound?.url ? (
+            <div className="nav-sound-row">
+              <SoundToggle />
+              <span className="nav-sound-label">{sound.title || 'Backsound'}</span>
+            </div>
+          ) : null}
         </Modal>
       )}
 

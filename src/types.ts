@@ -178,6 +178,15 @@ export interface SiteData {
       image: string;
     };
   };
+  sound: {
+    enabled: boolean;
+    url: string;
+    title: string;
+    label: string;
+    volume: number;
+    autoStart: boolean;
+    pauseVideo: boolean;
+  };
   relay: {
     chapterTitle: string;
     headingLine1: string;

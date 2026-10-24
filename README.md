@@ -84,6 +84,23 @@ Cek mode aktif dengan membuka **`/api/health`** (lihat field `mode`), atau badge
 - **Autosave draf ke browser**: perubahan yang belum disimpan tetap tersimpan di browser dan bisa dipulihkan lewat tombol **Pulihkan Draf**.
 - **Export/Import JSON** ada di pojok kanan atas `/admin` untuk backup & restore manual kapan saja.
 
+## 🎵 Backsound / Musik Latar
+
+Website bisa memutar musik latar (mis. audio dari video TikTok) dengan tombol **play / stop** di header, plus kontrol yang sama di menu navigasi pada layar HP.
+
+**Cara pakai (2 menit):**
+1. Konversi video sumber menjadi MP3 — mis. `ssstik.io`, `tikwm.com`, atau `yt-dlp -x --audio-format mp3 <url>` di laptop Anda.
+2. Masuk ke **`/admin` → tab "Backsound & Suara"** → **Upload MP3 dari Perangkat** (maks. 3 MB) atau tempel URL audio. Berkas tersimpan permanen di **Supabase Storage** (bucket `portfolio-assets`).
+3. Atur judul lagu, volume, dan perilakunya → **Simpan Perubahan** → **Redeploy** bila perlu.
+
+**Perilaku bawaan:**
+- **Satu sumber bunyi saja.** Saat musik menyala, video *The Inspiration Film* **dijeda dan dibisukan**; setelah musik dimatikan, video diputar lagi dari posisinya. Sebaliknya, menyalakan audio video otomatis **mematikan** musik.
+- **Tidak pernah bunyi sendiri.** Browser memblokir autoplay, jadi musik hanya menyala setelah pengunjung menekan tombol. Pengaturan **Autoplay = Ya** membuat musik lanjut menyala sendiri setelah interaksi pertama — tetapi hanya bagi pengunjung yang *pernah* menyalakannya.
+- Musik **fade in/out** ±0,4 detik, **loop**, dijeda otomatis saat tab browser tidak aktif, dan dilanjutkan saat tab kembali dibuka.
+- **Hemat kuota**: berkas audio tidak diunduh sebelum tombol ditekan (`preload="none"`).
+
+**Keamanan berkas:** unggahan audio diverifikasi dari *magic bytes*-nya (`ID3`/MPEG, `ftyp M4A`, `OggS`, `RIFF/WAVE`, `fLaC`). File palsu (`.exe`, SVG, HTML yang diganti ekstensi) otomatis ditolak, dan batas ukuran 3 MB menjaga body request tetap di bawah limit serverless Vercel (~4,5 MB).
+
 ## Menjalankan Secara Lokal
 
 ```bash

@@ -685,3 +685,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Bidang audio backsound ─────────────────────────────────────────────── */
+.admin-audio-field { display: grid; gap: 10px; }
+.admin-audio-field .admin-field { margin: 0; }
+.admin-audio-field input[type='text'],
+.admin-audio-field input:not([type]) { width: 100%; }
+.admin-audio-field input[type='range'] { width: 100%; accent-color: var(--accent); }
+.admin-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  color: var(--quiet, var(--muted));
+}
+.admin-hint-ok { color: #5ec26a; }
+.admin-hint-error { color: #e0574f; }
+.admin-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0 0 14px;
+  padding: 11px 13px;
+  border-left: 2px solid var(--line-strong);
+  background: var(--surface-2, transparent);
+}
+.admin-note code {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+}

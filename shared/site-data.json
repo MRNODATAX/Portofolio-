@@ -799,6 +799,15 @@
       "image": "/images/anime-v22/duo.jpg"
     }
   },
+  "sound": {
+    "enabled": true,
+    "url": "",
+    "title": "Backsound",
+    "volume": 0.35,
+    "autoStart": false,
+    "pauseVideo": true,
+    "label": "Backsound"
+  },
   "relay": {
     "chapterTitle": "RELAY / A PERSONAL CONNECTION",
     "headingLine1": "A different way",

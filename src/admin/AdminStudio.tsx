@@ -21,6 +21,7 @@ import {
   Lock,
   LogOut,
   MessageSquare,
+  Music,
   Plus,
   RotateCcw,
   Save,
@@ -50,8 +51,19 @@ import { WorkCover } from '../components/Archive';
 import { Mark } from '../components/Primitives';
 import ImageField from './ImageField';
 import VideoField from './VideoField';
+import AudioField from './AudioField';
 
-type AdminTab = 'identity' | 'projects' | 'about' | 'journey' | 'ecosystem' | 'personal' | 'certificates' | 'relay' | 'footer';
+type AdminTab =
+  | 'identity'
+  | 'projects'
+  | 'about'
+  | 'journey'
+  | 'ecosystem'
+  | 'personal'
+  | 'certificates'
+  | 'relay'
+  | 'sound'
+  | 'footer';
 
 const DRAFT_BACKUP_KEY = 'nodata-admin-draft-v1';
 
@@ -808,6 +820,11 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
             <MessageSquare size={16} />
             Relay AI &amp; Ethos
             <small>06 &amp; 08</small>
+          </button>
+          <button className={`admin-nav-btn ${tab === 'sound' ? 'active' : ''}`} onClick={() => setTab('sound')}>
+            <Music size={16} />
+            Backsound &amp; Suara
+            <small>{draft.sound?.url ? '♫' : '—'}</small>
           </button>
           <button className={`admin-nav-btn ${tab === 'footer' ? 'active' : ''}`} onClick={() => setTab('footer')}>
             <Share2 size={16} />
@@ -2844,6 +2861,141 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
           )}
 
           {/* TAB 8: CONTACTS, FOOTER & RATINGS MODERATION */}
+          {tab === 'sound' && (
+            <>
+              <div className="admin-section-head">
+                <div>
+                  <h2>Backsound &amp; Musik Latar</h2>
+                  <p>
+                    Putar musik latar di seluruh website. Tombol <strong>play / stop</strong> otomatis muncul di header
+                    (dan di menu navigasi pada layar HP). Saat musik menyala, video <em>The Inspiration Film</em>{' '}
+                    dijeda lebih dulu lalu diputar lagi setelah musik dimatikan — hanya ada satu sumber bunyi yang
+                    aktif pada satu waktu.
+                  </p>
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <h3>Berkas Audio</h3>
+                <p className="admin-note">
+                  Cara mendapatkan audio dari TikTok: buka video di aplikasi/website → salin tautan → konversi ke MP3
+                  lewat layanan seperti <code>ssstik.io</code>, <code>tikwm.com</code>, atau{' '}
+                  <code>yt-dlp -x --audio-format mp3 &lt;url&gt;</code> di laptop Anda. Lalu unggah hasilnya di sini.
+                </p>
+                <AudioField
+                  url={draft.sound?.url || ''}
+                  token={token}
+                  onChange={(url) =>
+                    updateDraft((d) => ({
+                      ...d,
+                      sound: { ...d.sound, url },
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="admin-card">
+                <h3>Pengaturan Pemutaran</h3>
+                <div className="admin-grid-3">
+                  <div className="admin-field">
+                    <label>Tampilkan Tombol Backsound</label>
+                    <select
+                      value={draft.sound?.enabled === false ? 'no' : 'yes'}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, enabled: e.target.value === 'yes' },
+                        }))
+                      }
+                    >
+                      <option value="yes">Ya — tampilkan di header</option>
+                      <option value="no">Tidak — sembunyikan</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Judul Lagu (tooltip &amp; aksesibilitas)</label>
+                    <input
+                      value={draft.sound?.title || ''}
+                      placeholder="Backsound"
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, title: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Label Singkat</label>
+                    <input
+                      value={draft.sound?.label || ''}
+                      placeholder="Backsound"
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, label: e.target.value },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Volume ({Math.round((draft.sound?.volume ?? 0.35) * 100)}%)</label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round((draft.sound?.volume ?? 0.35) * 100)}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, volume: Number(e.target.value) / 100 },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Jeda Video saat Musik Menyala</label>
+                    <select
+                      value={draft.sound?.pauseVideo === false ? 'no' : 'yes'}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, pauseVideo: e.target.value === 'yes' },
+                        }))
+                      }
+                    >
+                      <option value="yes">Ya — video berhenti dulu, lalu lanjut</option>
+                      <option value="no">Tidak — video tetap berjalan</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Autoplay</label>
+                    <select
+                      value={draft.sound?.autoStart ? 'yes' : 'no'}
+                      onChange={(e) =>
+                        updateDraft((d) => ({
+                          ...d,
+                          sound: { ...d.sound, autoStart: e.target.value === 'yes' },
+                        }))
+                      }
+                    >
+                      <option value="no">Tidak — murni lewat tombol (disarankan)</option>
+                      <option value="yes">Ya — ingat preferensi: lanjut sendiri setelah interaksi pertama</option>
+                    </select>
+                  </div>
+                </div>
+                <p className="admin-note">
+                  Catatan: browser memblokir audio yang bunyi sendiri saat halaman dibuka, jadi musik tidak akan
+                  pernah menyala sebelum pengunjung berinteraksi. Pengaturan <strong>Autoplay</strong> hanya
+                  memengaruhi pengunjung yang <em>pernah</em> menyalakan musik: preferensinya diingat, lalu musik
+                  lanjut menyala sendiri setelah ia menyentuh halaman satu kali. Nilai bawaan (Tidak) membuat
+                  backsound sepenuhnya dikendalikan tombol.
+                </p>
+              </div>
+            </>
+          )}
+
           {tab === 'footer' && (
             <>
               <div className="admin-section-head">
