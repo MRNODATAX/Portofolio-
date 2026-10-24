@@ -110,121 +110,115 @@ export default function Scene({ paused = false }: { mode?: 'hero'; paused?: bool
   if (photos.length === 0) return null;
 
   return (
-    <>
-      <div
-        className={`scene scene-hero ${expanded ? 'stack-open' : ''}`}
-        ref={ref}
-        onPointerMove={tilt}
-        onPointerLeave={reset}
-        onPointerDown={down}
-        onPointerUp={up}
-        onPointerCancel={() => {
-          gesture.current = null;
-        }}
-        onClickCapture={(e) => {
-          if (performance.now() < suppressClick.current) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-        data-paused={paused}
-      >
-        <div className="portrait-assembly">
-          {photos.map((photo, index) => {
-            const slot = order.indexOf(index);
-            const backplateKind = slot === 1 ? 'backplate-work' : slot === 2 ? 'backplate-personal' : 'backplate-extra';
-            // Kartu ke-4 dst. dikipas bergantian ke kanan/kiri agar tumpukan tetap seimbang.
-            const fan = slot >= 3 ? (slot % 2 === 1 ? 1 : -1) * Math.ceil((slot - 2) / 2) : 0;
-            return (
-              <button
-                type="button"
-                key={photo.id}
-                className={`portrait-sheet ${
-                  slot === 0 ? 'portrait-glass' : `portrait-backplate ${backplateKind}`
-                }`}
-                data-slot={slot}
-                data-photo-index={index}
-                style={{ zIndex: Math.max(1, 10 - slot), ['--fan' as string]: fan } as CSSProperties}
-                aria-label={`${slot === 0 ? 'Gambar utama:' : 'Tampilkan di depan:'} ${photo.title}`}
-                aria-pressed={slot === 0}
-                onClick={() => choose(index)}
-                onKeyDown={(e) => {
-                  if (slot === 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-                    e.preventDefault();
-                    cycle(e.key === 'ArrowRight' ? 1 : -1, true);
-                  }
-                }}
-              >
-                <div className={`portrait-window ${photo.kind}`}>
-                  <img
-                    src={photo.src}
-                    alt={photo.alt}
-                    width={photo.width}
-                    height={photo.height}
-                    style={{ objectPosition: photo.focal }}
-                    fetchPriority={index === 0 ? 'high' : 'auto'}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                  />
-                </div>
-                <span className="portrait-caption">
-                  <strong>{photo.title}</strong>
-                  <span>{photo.caption}</span>
+    <div
+      className={`scene scene-hero ${expanded ? 'stack-open' : ''}`}
+      ref={ref}
+      onPointerMove={tilt}
+      onPointerLeave={reset}
+      onPointerDown={down}
+      onPointerUp={up}
+      onPointerCancel={() => {
+        gesture.current = null;
+      }}
+      onClickCapture={(e) => {
+        if (performance.now() < suppressClick.current) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+      data-paused={paused}
+    >
+      <div className="portrait-assembly">
+        {photos.map((photo, index) => {
+          const slot = order.indexOf(index);
+          const backplateKind = slot === 1 ? 'backplate-work' : slot === 2 ? 'backplate-personal' : 'backplate-extra';
+          // Kartu ke-4 dst. dikipas bergantian ke kanan/kiri agar tumpukan tetap seimbang.
+          const fan = slot >= 3 ? (slot % 2 === 1 ? 1 : -1) * Math.ceil((slot - 2) / 2) : 0;
+          return (
+            <button
+              type="button"
+              key={photo.id}
+              className={`portrait-sheet ${
+                slot === 0 ? 'portrait-glass' : `portrait-backplate ${backplateKind}`
+              }`}
+              data-slot={slot}
+              data-photo-index={index}
+              style={{ zIndex: Math.max(1, 10 - slot), ['--fan' as string]: fan } as CSSProperties}
+              aria-label={`${slot === 0 ? 'Gambar utama:' : 'Tampilkan di depan:'} ${photo.title}`}
+              aria-pressed={slot === 0}
+              onClick={() => choose(index)}
+              onKeyDown={(e) => {
+                if (slot === 0 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+                  e.preventDefault();
+                  cycle(e.key === 'ArrowRight' ? 1 : -1, true);
+                }
+              }}
+            >
+              <div className={`portrait-window ${photo.kind}`}>
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  width={photo.width}
+                  height={photo.height}
+                  style={{ objectPosition: photo.focal }}
+                  fetchPriority={index === 0 ? 'high' : 'auto'}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+              </div>
+              <span className="portrait-caption">
+                <strong>{photo.title}</strong>
+                <span>{photo.caption}</span>
+              </span>
+              <span className="portrait-sheen" aria-hidden="true" />
+              <span className="glass-corner corner-one" />
+              <span className="glass-corner corner-two" />
+            </button>
+          );
+        })}
+        <div className="portrait-exploring">
+          <Braces size={18} />
+          <div>
+            <small>{identity.heroExploringLabel || 'CURRENTLY EXPLORING'}</small>
+            <span>
+              {exploringLines.map((line, idx) => (
+                <span key={idx}>
+                  {idx > 0 && <br />}
+                  {line}
                 </span>
-                <span className="portrait-sheen" aria-hidden="true" />
-                <span className="glass-corner corner-one" />
-                <span className="glass-corner corner-two" />
-              </button>
-            );
-          })}
-          <div className="portrait-location">
-            <span aria-hidden="true" className="indonesia-flag" />
-            <div>
-              <strong>{identity.heroLocationLabel || 'JAKARTA, ID'}</strong>
-              <span>{identity.heroLocationSub || 'Research & build.'}</span>
-            </div>
+              ))}
+            </span>
           </div>
-          <span className="portrait-signature" aria-hidden="true">
-            {identity.signature || 'No_Data.'}
-          </span>
+          <ArrowUpRight size={15} />
         </div>
-        <div className="stack-controls">
-          <button className="stack-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} aria-controls="photo-choices">
-            <Layers3 size={15} />
-            {expanded ? 'Rapatkan stack' : 'Buka stack'}
-            <span aria-hidden="true">{expanded ? '−' : '+'}</span>
-          </button>
-          <div hidden={!expanded} className="photo-choices" id="photo-choices" aria-label="Pilih gambar stack">
-            {photos.map((photo, i) => (
-              <button key={photo.id} aria-label={`Tampilkan ${photo.title}`} aria-pressed={order[0] === i} onClick={() => choose(i)}>
-                <span>{String(i + 1).padStart(2, '0')}</span>
-                {photo.title}
-              </button>
-            ))}
+        <div className="portrait-location">
+          <span aria-hidden="true" className="indonesia-flag" />
+          <div>
+            <strong>{identity.heroLocationLabel || 'JAKARTA, ID'}</strong>
+            <span>{identity.heroLocationSub || 'Research & build.'}</span>
           </div>
         </div>
-        <span className="sr-only" aria-live="polite">
-          Gambar utama: {photos[order[0]].title}
+        <span className="portrait-signature" aria-hidden="true">
+          {identity.signature || 'No_Data.'}
         </span>
       </div>
-
-      {/* Bar status "Currently Exploring" sengaja diletakkan DI BAWAH tumpukan foto,
-          bukan melayang di atasnya, supaya gambar utama tidak tertutup sedikit pun
-          baik di desktop maupun mobile. */}
-      <aside className="portrait-exploring">
-        <Braces size={17} />
-        <div>
-          <small>{identity.heroExploringLabel || 'CURRENTLY EXPLORING'}</small>
-          <span>
-            {exploringLines.map((line, idx) => (
-              <span key={idx}>
-                {idx > 0 && <br />}
-                {line}
-              </span>
-            ))}
-          </span>
+      <div className="stack-controls">
+        <button className="stack-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} aria-controls="photo-choices">
+          <Layers3 size={15} />
+          {expanded ? 'Rapatkan stack' : 'Buka stack'}
+          <span aria-hidden="true">{expanded ? '−' : '+'}</span>
+        </button>
+        <div hidden={!expanded} className="photo-choices" id="photo-choices" aria-label="Pilih gambar stack">
+          {photos.map((photo, i) => (
+            <button key={photo.id} aria-label={`Tampilkan ${photo.title}`} aria-pressed={order[0] === i} onClick={() => choose(i)}>
+              <span>{String(i + 1).padStart(2, '0')}</span>
+              {photo.title}
+            </button>
+          ))}
         </div>
-        <ArrowUpRight size={15} />
-      </aside>
-    </>
+      </div>
+      <span className="sr-only" aria-live="polite">
+        Gambar utama: {photos[order[0]].title}
+      </span>
+    </div>
   );
 }
