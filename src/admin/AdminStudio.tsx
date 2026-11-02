@@ -52,6 +52,8 @@ import { Mark } from '../components/Primitives';
 import ImageField from './ImageField';
 import VideoField from './VideoField';
 import AudioField from './AudioField';
+import UrlField from './UrlField';
+import { normalizeUrl } from '../lib/url';
 
 type AdminTab =
   | 'identity'
@@ -1145,15 +1147,13 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                         </div>
                       </div>
 
-                      <div className="admin-field">
-                        <label>URL Demo / Repositori GitHub (Kosongkan jika tidak ada tombol link)</label>
-                        <input
-                          type="url"
-                          value={activeProject.url}
-                          onChange={(e) => updateActiveProject({ url: e.target.value })}
-                          placeholder="https://..."
-                        />
-                      </div>
+                      <UrlField
+                        label="URL Demo / Repositori GitHub (Kosongkan jika tidak ada tombol link)"
+                        value={activeProject.url}
+                        onChange={(nilai) => updateActiveProject({ url: nilai })}
+                        placeholder="https://... atau namadomain.com"
+                        hint="Boleh langsung nama domain — skema https:// akan dilengkapi otomatis."
+                      />
 
                       <ImageField
                         label="Gambar Cover Proyek (Upload Foto/Screenshot, URL, atau Pilih SVG Bawaan)"
@@ -1904,13 +1904,13 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
               <div className="admin-card">
                 <h3>GitHub Hub &amp; Pengantar</h3>
                 <div className="admin-grid-2">
-                  <div className="admin-field">
-                    <label>URL GitHub Pusat</label>
-                    <input
-                      value={draft.ecosystem.githubUrl}
-                      onChange={(e) => updateDraft((d) => ({ ...d, ecosystem: { ...d.ecosystem, githubUrl: e.target.value } }))}
-                    />
-                  </div>
+                  <UrlField
+                    label="URL GitHub Pusat"
+                    value={draft.ecosystem.githubUrl}
+                    onChange={(nilai) => updateDraft((d) => ({ ...d, ecosystem: { ...d.ecosystem, githubUrl: nilai } }))}
+                    placeholder="https://github.com/namapengguna"
+                    hint="Boleh langsung nama domain — skema https:// akan dilengkapi otomatis."
+                  />
                   <div className="admin-field">
                     <label>Label Hub Pusat</label>
                     <input
@@ -2500,19 +2500,17 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                         }
                       />
                     </div>
-                    <div className="admin-field">
-                      <label>URL File / Kredensial Sertifikat</label>
-                      <input
-                        value={cert.credentialUrl || ''}
-                        placeholder="https://..."
-                        onChange={(e) =>
-                          updateDraft((d) => {
-                            d.certificates.items[idx].credentialUrl = e.target.value;
-                            return d;
-                          })
-                        }
-                      />
-                    </div>
+                    <UrlField
+                      label="URL File / Kredensial Sertifikat"
+                      value={cert.credentialUrl || ''}
+                      placeholder="https://... atau namadomain.com"
+                      onChange={(nilai) =>
+                        updateDraft((d) => {
+                          d.certificates.items[idx].credentialUrl = nilai;
+                          return d;
+                        })
+                      }
+                    />
                   </div>
 
                   <div className="admin-field">
@@ -3055,10 +3053,16 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                     />
                     <input
                       value={soc.url}
-                      placeholder="https://..."
+                      placeholder="https://... atau namadomain.com"
                       onChange={(e) =>
                         updateDraft((d) => {
                           d.footer.socials[idx].url = e.target.value;
+                          return d;
+                        })
+                      }
+                      onBlur={(e) =>
+                        updateDraft((d) => {
+                          d.footer.socials[idx].url = normalizeUrl(e.target.value) || e.target.value.trim();
                           return d;
                         })
                       }
@@ -3081,13 +3085,13 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                 ))}
 
                 <div className="admin-grid-3" style={{ marginTop: 16 }}>
-                  <div className="admin-field">
-                    <label>URL Tombol Lingkaran Kontak Utama</label>
-                    <input
-                      value={draft.footer.primaryContactUrl}
-                      onChange={(e) => updateDraft((d) => ({ ...d, footer: { ...d.footer, primaryContactUrl: e.target.value } }))}
-                    />
-                  </div>
+                  <UrlField
+                    label="URL Tombol Lingkaran Kontak Utama"
+                    value={draft.footer.primaryContactUrl}
+                    onChange={(nilai) => updateDraft((d) => ({ ...d, footer: { ...d.footer, primaryContactUrl: nilai } }))}
+                    placeholder="https://wa.me/62... atau nomor tujuan"
+                    allowInternal
+                  />
                   <div className="admin-field">
                     <label>Nama Copyright</label>
                     <input

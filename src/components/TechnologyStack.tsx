@@ -1,3 +1,4 @@
+import { safeHref } from '../lib/url';
 import { useRef, useState, type PointerEvent } from 'react';
 import { Layers3, Play, Check } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
@@ -75,7 +76,7 @@ export default function TechnologyStack({ paused }: { paused: boolean }) {
               <span />
             </div>
             <a
-              href={siteData.ecosystem.githubUrl || 'https://github.com/MRNODATAX'}
+              href={safeHref(siteData.ecosystem.githubUrl || 'https://github.com/MRNODATAX')}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Profil GitHub ${siteData.identity.name}`}
