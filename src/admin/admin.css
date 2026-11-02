@@ -718,3 +718,16 @@
   border-radius: 4px;
   background: var(--surface-2);
 }
+
+.admin-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-spin { animation: admin-putar 1s linear infinite; }
+
+@keyframes admin-putar {
+  to { transform: rotate(360deg); }
+}

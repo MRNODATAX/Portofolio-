@@ -8,3 +8,7 @@ coverage/
 !.env.example
 shared/secrets.json
 preview-website.html
+
+# Hasil unggahan lokal (mode filesystem). Di produksi berkas masuk Supabase Storage.
+public/images/uploads/*
+!public/images/uploads/.gitkeep

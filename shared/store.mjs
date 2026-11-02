@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sanitizeUrl, verifyAudioMagicBytes, verifyImageMagicBytes, verifyVideoMagicBytes } from './security.mjs';
@@ -578,6 +578,200 @@ export async function saveUploadedAsset({ filename = 'image.webp', dataUrl = '' 
     url: `data:${verified.mime};base64,${buffer.toString('base64')}`,
     mode: 'inline',
   };
+}
+
+
+/**
+ * Mengembalikan nama objek bila `url` adalah aset milik kita (bucket Supabase
+ * atau folder /images/uploads/). URL luar (Drive, Cloudinary, dll) dikembalikan
+ * null dan TIDAK PERNAH dihapus.
+ */
+function assetObjectName(url) {
+  if (typeof url !== 'string' || !url) return null;
+  let nama = null;
+  const sb = getSupabaseConfig();
+  if (sb) {
+    const awalan = `${sb.url}/storage/v1/object/public/${SUPABASE_BUCKET}/`;
+    if (url.startsWith(awalan)) nama = url.slice(awalan.length);
+  }
+  const lokal = '/images/uploads/';
+  if (nama === null && url.startsWith(lokal)) nama = url.slice(lokal.length);
+  if (nama === null) return null;
+  try {
+    nama = decodeURIComponent(nama);
+  } catch {
+    /* biarkan apa adanya */
+  }
+  // Tolak jalur yang mencurigakan (path traversal).
+  if (!nama || nama.includes('..') || nama.startsWith('/') || nama.includes('\\')) return null;
+  return nama;
+}
+
+/** Mengumpulkan semua URL aset milik kita yang dipakai di dalam data situs. */
+export function collectAssetUrls(data) {
+  const hasil = new Set();
+  const sb = getSupabaseConfig();
+  const awalanBucket = sb ? `${sb.url}/storage/v1/object/public/${SUPABASE_BUCKET}/` : null;
+  const awalanLokal = '/images/uploads/';
+  const jalan = (nilai) => {
+    if (typeof nilai === 'string') {
+      if (nilai.startsWith(awalanLokal) || (awalanBucket && nilai.startsWith(awalanBucket))) hasil.add(nilai);
+      return;
+    }
+    if (Array.isArray(nilai)) {
+      for (const item of nilai) jalan(item);
+      return;
+    }
+    if (nilai && typeof nilai === 'object') {
+      for (const item of Object.values(nilai)) jalan(item);
+    }
+  };
+  jalan(data);
+  return hasil;
+}
+
+/** Menghapus satu berkas dari Supabase Storage (atau disk saat mode filesystem). */
+export async function deleteUploadedAsset(url) {
+  const nama = assetObjectName(url);
+  if (!nama) return { ok: false, skipped: true, alasan: 'Bukan aset milik kita.' };
+
+  const sb = getSupabaseConfig();
+  if (sb) {
+    try {
+      const res = await fetch(
+        `${sb.url}/storage/v1/object/${SUPABASE_BUCKET}/${nama
+          .split('/')
+          .map(encodeURIComponent)
+          .join('/')}`,
+        { method: 'DELETE', headers: supabaseHeaders(sb) }
+      );
+      return { ok: res.ok, mode: 'supabase', nama };
+    } catch (err) {
+      return { ok: false, mode: 'supabase', nama, alasan: err instanceof Error ? err.message : 'Gagal menghapus.' };
+    }
+  }
+
+  if (isFilesystemWritable()) {
+    try {
+      unlinkSync(join(UPLOADS_DIR, nama));
+      return { ok: true, mode: 'filesystem', nama };
+    } catch {
+      return { ok: false, mode: 'filesystem', nama, alasan: 'Berkas tidak ditemukan.' };
+    }
+  }
+
+  // Mode memori / inline data-URL: tidak ada berkas fisik yang tersisa.
+  return { ok: true, mode: 'memory', nama };
+}
+
+/** Menghapus banyak berkas sekaligus. Kegagalan satu berkas tidak menggagalkan yang lain. */
+export async function deleteUploadedAssets(urls = []) {
+  const daftar = [...new Set(urls.filter((u) => typeof u === 'string' && u))];
+  const terhapus = [];
+  const gagal = [];
+  for (const url of daftar) {
+    const hasil = await deleteUploadedAsset(url);
+    if (hasil.ok) terhapus.push(url);
+    else if (!hasil.skipped) gagal.push({ url, alasan: hasil.alasan || 'Gagal' });
+  }
+  return { terhapus, gagal, jumlah: terhapus.length };
+}
+
+/**
+ * Setelah data situs disimpan, hapus berkas yang referensinya sudah hilang
+ * (gambar yang dihapus/diganti dari /admin). Dipanggil api/content.js.
+ */
+export async function deleteAssetsRemovedFrom(dataLama, dataBaru) {
+  if (!dataLama) return { terhapus: [], gagal: [], jumlah: 0 };
+  const lama = collectAssetUrls(dataLama);
+  const baru = collectAssetUrls(dataBaru);
+  const yatim = [...lama].filter((url) => !baru.has(url));
+  if (!yatim.length) return { terhapus: [], gagal: [], jumlah: 0 };
+  return deleteUploadedAssets(yatim);
+}
+
+/** Daftar seluruh berkas yang tersimpan di bucket/disk, berikut ukurannya. */
+export async function listUploadedAssets() {
+  const sb = getSupabaseConfig();
+  if (sb) {
+    try {
+      const res = await fetch(`${sb.url}/storage/v1/object/list/${SUPABASE_BUCKET}`, {
+        method: 'POST',
+        headers: supabaseHeaders(sb, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ prefix: '', limit: 1000, offset: 0, sortBy: { column: 'name', order: 'asc' } }),
+      });
+      if (!res.ok) return { mode: 'supabase', items: [], error: `Gagal membaca bucket (${res.status}).` };
+      const isi = await res.json();
+      const items = Array.isArray(isi)
+        ? isi.map((o) => ({
+            nama: o.name,
+            url: `${sb.url}/storage/v1/object/public/${SUPABASE_BUCKET}/${o.name}`,
+            bytes: Number(o?.metadata?.size || 0),
+            mime: o?.metadata?.mimetype || '',
+          }))
+        : [];
+      return { mode: 'supabase', items };
+    } catch (err) {
+      return { mode: 'supabase', items: [], error: err instanceof Error ? err.message : 'Gagal membaca bucket.' };
+    }
+  }
+
+  if (isFilesystemWritable()) {
+    try {
+      if (!existsSync(UPLOADS_DIR)) return { mode: 'filesystem', items: [] };
+      const items = readdirSync(UPLOADS_DIR)
+        // Berkas tersembunyi/penanda (.gitkeep, .DS_Store) tidak pernah dianggap aset.
+        .filter((n) => !n.startsWith('.'))
+        .filter((n) => statSync(join(UPLOADS_DIR, n)).isFile())
+        .map((n) => ({
+          nama: n,
+          url: `/images/uploads/${n}`,
+          bytes: statSync(join(UPLOADS_DIR, n)).size,
+          mime: '',
+        }));
+      return { mode: 'filesystem', items };
+    } catch {
+      return { mode: 'filesystem', items: [] };
+    }
+  }
+
+  return { mode: 'memory', items: [], error: 'Mode memori: tidak ada berkas yang tersimpan permanen.' };
+}
+
+/**
+ * Inventaris berkas: mana yang masih dipakai data situs dan mana yang jadi
+ * yatim (tidak direferensikan lagi). Dipakai tombol "bersihkan" di /admin.
+ */
+export async function auditUploadedAssets({ dryRun = false } = {}) {
+  const daftar = await listUploadedAssets();
+  if (daftar.error && !daftar.items.length) {
+    return { mode: daftar.mode, total: 0, totalBytes: 0, terpakai: 0, yatim: 0, yatimBytes: 0, rincian: [], dihapus: 0, dihapusBytes: 0, error: daftar.error };
+  }
+  const data = await getSiteData().catch(() => null);
+  const dipakai = collectAssetUrls(data || {});
+  const yatim = daftar.items.filter((item) => !dipakai.has(item.url));
+  const yatimBytes = yatim.reduce((a, b) => a + (b.bytes || 0), 0);
+  const hasil = {
+    mode: daftar.mode,
+    total: daftar.items.length,
+    totalBytes: daftar.items.reduce((a, b) => a + (b.bytes || 0), 0),
+    terpakai: daftar.items.length - yatim.length,
+    yatim: yatim.length,
+    yatimBytes,
+    rincian: yatim.map((i) => ({ nama: i.nama, url: i.url, bytes: i.bytes })),
+    dihapus: 0,
+    dihapusBytes: 0,
+    error: daftar.error || '',
+  };
+  if (!dryRun && yatim.length) {
+    const hapus = await deleteUploadedAssets(yatim.map((i) => i.url));
+    hasil.dihapus = hapus.jumlah;
+    hasil.dihapusBytes = yatim
+      .filter((i) => hapus.terhapus.includes(i.url))
+      .reduce((a, b) => a + (b.bytes || 0), 0);
+    if (hapus.gagal.length) hasil.error = `${hapus.gagal.length} berkas gagal dihapus.`;
+  }
+  return hasil;
 }
 
 export async function supabaseFetchReviews(sb) {
