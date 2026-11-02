@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Menu, Braces, Cpu, Lock, Pause, Play, Sun, Moon, LoaderCircle } from 'lucide-react';
 import { useSiteData } from './context/SiteDataContext';
 import { Chapter, ExternalLink, Mark, Modal } from './components/Primitives';
+import { safeHref } from './lib/url';
 import Scene from './components/Scene';
 import ToolOrbit from './components/ToolOrbit';
 import RelayMark from './components/RelayMark';
@@ -393,7 +394,7 @@ export default function App() {
                 <em>{footer.headingItalic}</em>
               </h2>
               <a
-                href={footer.primaryContactUrl || footer.socials[0]?.url || '#contact'}
+                href={safeHref(footer.primaryContactUrl || footer.socials[0]?.url, '#contact')}
                 className="contact-circle"
                 target="_blank"
                 rel="noopener noreferrer"

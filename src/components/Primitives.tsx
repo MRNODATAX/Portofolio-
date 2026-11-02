@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ArrowUpRight, X } from 'lucide-react';
 import { useSiteData } from '../context/SiteDataContext';
+import { safeHref as safeUrl } from '../lib/url';
 
 export function Mark({ className = '' }: { className?: string }) {
   const { siteData } = useSiteData();
@@ -35,22 +36,13 @@ export function Chapter({ number, children, light = false }: { number: string; c
   );
 }
 
-export function safeHref(raw: string): string {
-  if (!raw || typeof raw !== 'string') return '#';
-  const trimmed = raw.trim();
-  if (!trimmed) return '#';
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) return trimmed;
-  if (trimmed.startsWith('#')) return trimmed;
-  try {
-    const parsed = new URL(trimmed);
-    const proto = parsed.protocol.toLowerCase();
-    if (proto === 'https:' || proto === 'http:' || proto === 'mailto:' || proto === 'tel:') {
-      return trimmed;
-    }
-  } catch {
-    return '#';
-  }
-  return '#';
+/**
+ * Tautan dari data admin. Domain tanpa skema (`namadomain.com`) dilengkapi
+ * otomatis menjadi `https://namadomain.com` supaya tidak dianggap tautan
+ * relatif oleh browser (yang membuat pengunjung kembali ke halaman awal).
+ */
+export function safeHref(raw: unknown, cadangan = '#'): string {
+  return safeUrl(raw, cadangan);
 }
 
 export function ExternalLink({ href, children, className = '' }: { href: string; children: ReactNode; className?: string }) {
