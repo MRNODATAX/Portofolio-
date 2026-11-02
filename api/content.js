@@ -1,6 +1,12 @@
 import { requireAdminAuth } from '../shared/auth.mjs';
 import { applyApiSecurityHeaders, isCrossSiteRequest, parseJsonBody } from '../shared/security.mjs';
-import { getSiteData, getStorageMode, saveSiteData, saveUploadedAsset } from '../shared/store.mjs';
+import {
+  deleteAssetsRemovedFrom,
+  getSiteData,
+  getStorageMode,
+  saveSiteData,
+  saveUploadedAsset,
+} from '../shared/store.mjs';
 import { stripSecretsFromSiteData } from '../shared/secrets.mjs';
 
 const MAX_CMS_BODY_BYTES = 56 * 1024 * 1024; // base64 payload: images + (locally) video uploads.
@@ -53,8 +59,23 @@ export default async function handler(req, res) {
 
     if (action === 'save') {
       // Rahasia (API key) tidak pernah disimpan di dalam data CMS publik.
-      const result = await saveSiteData(stripSecretsFromSiteData(body.data));
-      return res.status(200).json({ ok: true, ...result });
+      const bersih = stripSecretsFromSiteData(body.data);
+      // Simpan dulu isi baru, lalu buang berkas yang referensinya hilang
+      // (gambar/video/audio yang dihapus atau diganti dari /admin).
+      let sebelum = null;
+      try {
+        sebelum = await getSiteData();
+      } catch {
+        /* data lama tidak terbaca: lewati pembersihan berkas */
+      }
+      const result = await saveSiteData(bersih);
+      let dibersihkan = { jumlah: 0, gagal: [] };
+      try {
+        dibersihkan = await deleteAssetsRemovedFrom(sebelum, bersih);
+      } catch {
+        /* kegagalan pembersihan tidak boleh membatalkan penyimpanan */
+      }
+      return res.status(200).json({ ok: true, ...result, berkasDihapus: dibersihkan.jumlah });
     }
 
     return res.status(400).json({ error: 'Aksi tidak dikenali.' });

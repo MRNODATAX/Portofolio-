@@ -33,6 +33,9 @@ import {
   Upload,
   User,
   Waypoints,
+  HardDrive,
+  FileSearch,
+  Loader2,
 } from 'lucide-react';
 import './admin.css';
 import { INITIAL_SITE_DATA, useSiteData } from '../context/SiteDataContext';
@@ -65,7 +68,8 @@ type AdminTab =
   | 'certificates'
   | 'relay'
   | 'sound'
-  | 'footer';
+  | 'footer'
+  | 'storage';
 
 const DRAFT_BACKUP_KEY = 'nodata-admin-draft-v1';
 
@@ -87,6 +91,26 @@ function slugify(input: string) {
   );
 }
 
+interface LaporanBerkas {
+  mode?: string;
+  total?: number;
+  totalBytes?: number;
+  terpakai?: number;
+  yatim?: number;
+  yatimBytes?: number;
+  dihapus?: number;
+  dihapusBytes?: number;
+  rincian?: { nama: string; url: string; bytes: number }[];
+  error?: string;
+}
+
+function formatUkuran(bytes: number) {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export default function AdminStudio({ onExit }: { onExit: () => void }) {
   const { siteData, setSiteData, storageMode: ctxStorage } = useSiteData();
   const { theme, toggle: toggleTheme } = useTheme();
@@ -101,6 +125,8 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
   const [authChecked, setAuthChecked] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [storageMode, setStorageMode] = useState(ctxStorage || 'filesystem');
+  const [laporanBerkas, setLaporanBerkas] = useState<LaporanBerkas | null>(null);
+  const [memeriksaBerkas, setMemeriksaBerkas] = useState(false);
 
   const [password, setPassword] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
@@ -487,6 +513,35 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [authenticated, draft, saving, token]);
 
+  async function periksaBerkas(aksi: 'report' | 'sweep') {
+    setMemeriksaBerkas(true);
+    try {
+      const res = await fetch('/api/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: aksi }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.ok) {
+        setToast({ text: body?.error || 'Gagal memeriksa penyimpanan berkas.', isError: true });
+        return;
+      }
+      setLaporanBerkas(body as LaporanBerkas);
+      if (aksi === 'sweep') {
+        setToast({
+          text:
+            body.dihapus > 0
+              ? `${body.dihapus} berkas yatim dihapus (${formatUkuran(body.dihapusBytes || 0)} dikosongkan).`
+              : 'Tidak ada berkas yatim — penyimpanan sudah bersih.',
+        });
+      }
+    } catch {
+      setToast({ text: 'Gagal menghubungi server penyimpanan.', isError: true });
+    } finally {
+      setMemeriksaBerkas(false);
+    }
+  }
+
   function exportJson() {
     const blob = new Blob([JSON.stringify(draft, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -833,6 +888,11 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
             Kontak &amp; Rating
             <small>{draft.footer.socials.length}</small>
           </button>
+          <button className={`admin-nav-btn ${tab === 'storage' ? 'active' : ''}`} onClick={() => setTab('storage')}>
+            <HardDrive size={16} />
+            Penyimpanan &amp; Berkas
+            <small>{typeof laporanBerkas?.total === 'number' ? laporanBerkas.total : '—'}</small>
+          </button>
         </aside>
 
         <main className="admin-main">
@@ -963,6 +1023,117 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
               <button type="button" className="admin-btn admin-btn-sm" onClick={() => setToast(null)}>
                 Tutup
               </button>
+            </div>
+          )}
+
+          {/* TAB: PENYIMPANAN & BERKAS */}
+          {tab === 'storage' && (
+            <div className="admin-section">
+              <div className="admin-section-head">
+                <div>
+                  <h2>Penyimpanan &amp; Berkas Terunggah</h2>
+                  <p>
+                    Memeriksa isi bucket <code>portfolio-assets</code>: berapa berkas yang masih dipakai situs dan
+                    berapa yang sudah jadi <b>yatim</b> (tidak direferensikan lagi di data situs).
+                  </p>
+                </div>
+                <div className="admin-section-actions">
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm"
+                    onClick={() => periksaBerkas('report')}
+                    disabled={memeriksaBerkas}
+                  >
+                    {memeriksaBerkas ? <Loader2 size={14} className="admin-spin" /> : <FileSearch size={14} />}
+                    Periksa sekarang
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-sm admin-btn-danger"
+                    onClick={() => periksaBerkas('sweep')}
+                    disabled={memeriksaBerkas}
+                  >
+                    <Trash2 size={13} />
+                    Bersihkan berkas yatim
+                  </button>
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <h3>Cara kerja penghapusan</h3>
+                <ul className="admin-note" style={{ paddingLeft: 20, marginTop: 0 }}>
+                  <li>
+                    Sejak pembaruan ini, setiap kali Anda <b>menyimpan</b> perubahan di /admin, server membandingkan
+                    data lama dan baru. Berkas yang referensinya hilang (gambar/video/audio yang Anda hapus atau ganti)
+                    <b> langsung dihapus dari bucket</b>.
+                  </li>
+                  <li>
+                    Berkas yang terlanjur jadi yatim <i>sebelum</i> pembaruan ini tidak ikut terdeteksi otomatis —
+                    gunakan tombol <b>Bersihkan berkas yatim</b> di atas.
+                  </li>
+                  <li>
+                    Yang dihapus hanya berkas di bucket <code>portfolio-assets</code>. Tautan gambar dari luar (Drive,
+                    Cloudinary, dsb.) hanya dibuang referensinya saja, filenya tidak disentuh.
+                  </li>
+                </ul>
+              </div>
+
+              {laporanBerkas && (
+                <div className="admin-card">
+                  <h3>Hasil pemeriksaan</h3>
+                  {laporanBerkas.error && (
+                    <p className="admin-hint admin-hint-error" style={{ marginTop: 0 }}>
+                      {laporanBerkas.error}
+                    </p>
+                  )}
+                  <div className="admin-grid-3" style={{ marginTop: 12 }}>
+                    <div className="admin-field">
+                      <label>Mode penyimpanan</label>
+                      <input value={laporanBerkas.mode || storageMode} readOnly />
+                    </div>
+                    <div className="admin-field">
+                      <label>Total berkas</label>
+                      <input value={`${laporanBerkas.total ?? 0} (${formatUkuran(laporanBerkas.totalBytes || 0)})`} readOnly />
+                    </div>
+                    <div className="admin-field">
+                      <label>Masih dipakai situs</label>
+                      <input value={`${laporanBerkas.terpakai ?? 0} berkas`} readOnly />
+                    </div>
+                  </div>
+                  <div className="admin-grid-2" style={{ marginTop: 12 }}>
+                    <div className="admin-field">
+                      <label>Berkas yatim (tidak dipakai)</label>
+                      <input
+                        value={`${laporanBerkas.yatim ?? 0} berkas — ${formatUkuran(laporanBerkas.yatimBytes || 0)}`}
+                        readOnly
+                      />
+                    </div>
+                    <div className="admin-field">
+                      <label>Terakhir dibersihkan</label>
+                      <input value={`${laporanBerkas.dihapus ?? 0} dihapus — ${formatUkuran(laporanBerkas.dihapusBytes || 0)}`} readOnly />
+                    </div>
+                  </div>
+
+                  {!!laporanBerkas.rincian?.length && (
+                    <div style={{ marginTop: 14 }}>
+                      <label>Daftar berkas yatim</label>
+                      <ul className="admin-note" style={{ paddingLeft: 20, maxHeight: 260, overflow: 'auto' }}>
+                        {laporanBerkas.rincian.map((b) => (
+                          <li key={b.url}>
+                            <code>{b.nama}</code> — {formatUkuran(b.bytes || 0)}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!laporanBerkas.rincian?.length && !laporanBerkas.error && (
+                    <p className="admin-hint admin-hint-ok" style={{ marginTop: 12 }}>
+                      Tidak ada berkas yatim. Semua berkas di bucket masih dipakai situs.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

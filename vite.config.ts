@@ -7,7 +7,7 @@ function localApi(): Plugin {
   const register = (middlewares: any, ssrLoadModule?: (url: string) => Promise<any>) => {
     middlewares.use('/api', async (req: any, res: any, next: any) => {
       const route = req.url?.split('?')[0];
-      if (!['/chat', '/health', '/ratings', '/content', '/admin'].includes(route || '')) return next();
+      if (!['/chat', '/health', '/ratings', '/content', '/admin', '/assets'].includes(route || '')) return next();
       const maxBytes = route === '/content' ? 64 * 1024 * 1024 : 50000;
       let raw = '';
       try {
