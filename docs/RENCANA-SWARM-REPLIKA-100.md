@@ -231,16 +231,19 @@ kemunculan item < 0,5 detik** terhadap referensi.
 | Kode | **Tulis ulang dari spesifikasi** — aman soal lisensi, perilaku sama, kode sendiri |
 | Cakupan | **Seluruh halaman** — bukan cuma hero |
 | Durasi | **Biarkan penuh, tidak dipotong** — tiap bagian dibangun dengan kecepatan wajar |
-| HP | **Sama seperti desktop** — tidak diringankan (akan diukur dulu di uji performa) |
+| HP | **Mulai penuh seperti desktop, lalu adaptif** (diputuskan Mas 2026-11-03: kalau fps < 40 selama 1,2 detik, jumlah kursor otomatis diturunkan; lantai 4 kursor) |
 
 Konsekuensi yang harus dijaga:
 - Efek bakal berjalan **puluhan detik** dan membangun seluruh halaman. Karena itu
   **HUD wajib** hadir sejak Fase 3F: pengunjung harus bisa lihat progres dan punya tombol
   **Go live** (langsung ke halaman asli) kapan saja.
 - Tombol **Lewati** dan **Esc** tetap harus selalu siap sejak detik pertama (sudah ada).
-- Karena HP diperlakukan sama, **uji performa jadi syarat sebelum fase terakhir**:
-  kalau fps turun di bawah 30 pada HP kelas menengah, pengurangan agen otomatis akan
-  diaktifkan — tapi setelah diukur, bukan sebelum.
+- Penurunan otomatis (keputusan Mas) **sudah terpasang di Fase 3A**: engine
+  mengukur fps tiap frame; bila di bawah 40 fps selama 1,2 detik (diukur setelah
+  pembukaan lewat), kursor dikurangi ke setengahnya — lantai 4 kursor. Satu arah
+  (tidak dikembalikan) supaya tidak berfluktuasi. Terbukti di
+  `tools/uji/uji-kinerja.mjs`: CPU di-throttle 20× → fps 23 → 18 kursor turun
+  ke 4, dan efek tetap selesai.
 
 ---
 

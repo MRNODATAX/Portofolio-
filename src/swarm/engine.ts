@@ -25,7 +25,13 @@ const acak = (a: number, b: number) => a + Math.random() * (b - a);
 const AGEN_INTRO = 18;
 /** Batas bawah & atas jumlah kursor yang dipertahankan. */
 const AGEN_MIN_BAWAAN = 8;
+/** Batas atas kursor yang boleh bekerja bersamaan. */
 const AGEN_MAKS = 36;
+/**
+ * Lantai jumlah kursor saat kinerja diturunkan otomatis (keputusan Mas:
+ * HP mulai penuh seperti desktop, baru dikurangi kalau fps benar-benar turun).
+ */
+const AGEN_LANTAI = 4;
 
 /** Korutin: tiap `yield` menerima `dt` (detik) dari loop animasi. */
 type Korutin = Generator<void, void, number>;
@@ -194,6 +200,17 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
 
   let waktu = 0;
   let tempo = 2.1;
+
+  // ── penjaga kinerja adaptif ─────────────────────────────────────────────
+  // Dimulai penuh seperti desktop. Bila frame konsisten di bawah 40 fps selama
+  // 1,2 detik (diukur SETELAH pembukaan selesai, supaya jank saat halaman
+  // dikosongkan tidak ikut terhitung), kursor dikurangi otomatis. Satu arah:
+  // tidak dikembalikan, supaya tidak berfluktuasi.
+  let fpsHalus = 60;
+  let detikLambat = 0;
+  let kinerjaTurun = false;
+  /** Batas jumlah kursor saat ini — menyusut bila kinerja diturunkan. */
+  let batasAgen = agenMin;
   let berhenti = false;
   let rampung = false;
   let dimulai = false;
@@ -492,6 +509,28 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     // Tempo global: makin banyak pekerjaan & makin banyak kursor, makin cepat.
     tempo = clamp(2.1 + (sisa.length / Math.max(1, agen.length)) * 0.5, 2.1, 4.5) * speed;
 
+    // Ukur fps memakai dt engine (sudah dibatasi 0,05 s → batas bawah 20 fps).
+    // Diukur hanya setelah pembukaan lewat, supaya jank awal tidak ikut dihitung.
+    if (dimulai && dt > 0) {
+      fpsHalus = fpsHalus * 0.9 + (1 / dt) * 0.1;
+      if (fpsHalus < 40) detikLambat += dt;
+      else detikLambat = 0;
+      if (!kinerjaTurun && detikLambat > 1.2) {
+        kinerjaTurun = true;
+        batasAgen = Math.max(AGEN_LANTAI, Math.round(agenMin / 2));
+        // Usir kursor tambahan yang sedang menganggur (yang sedang pegang tugas
+        // dibiarkan menyelesaikan dulu supaya tidak ada kotak yang mangkrak).
+        let aktif = agen.filter((c) => !c.leaving).length;
+        for (const c of agen) {
+          if (aktif <= batasAgen) break;
+          if (c.leaving || c.home || c.tugas) continue;
+          c.leaving = true;
+          c.gen = keluar(c);
+          aktif--;
+        }
+      }
+    }
+
     if (!dimulai && waktu >= mulaiPada) {
       dimulai = true;
       for (const c of agen) {
@@ -529,6 +568,11 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
         const baris: number[] = [Number(waktu.toFixed(4))];
         for (const c of agen) baris.push(Math.round(c.x), Math.round(c.y));
         g.__jejakSwarm.push(baris);
+        (window as unknown as { __kinerjaSwarm?: { fps: number; turun: boolean; batas: number } }).__kinerjaSwarm = {
+          fps: Math.round(fpsHalus),
+          turun: kinerjaTurun,
+          batas: batasAgen,
+        };
       }
     }
 
@@ -539,7 +583,10 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
 
     // Tambah kursor kalau pekerjaan masih banyak.
     jedaLahir -= dt;
-    const diinginkan = clamp(agenMin + Math.floor(sisa.length / 2), agenMin, AGEN_MAKS);
+    const diinginkan = Math.min(
+      clamp(agenMin + Math.floor(sisa.length / 2), agenMin, AGEN_MAKS),
+      Math.max(AGEN_LANTAI, batasAgen),
+    );
     const aktif = agen.filter((c) => !c.leaving).length;
     const sibuk = agen.filter((c) => c.tugas).length;
     if (aktif < diinginkan && sisa.length > aktif - sibuk && jedaLahir <= 0) {
@@ -581,7 +628,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
       if (!c.tugas) {
         c.idleFor += dt;
         const jumlahAktif = agen.filter((m) => !m.leaving).length;
-        if (!c.leaving && c.idleFor > 2.5 && jumlahAktif > agenMin && !c.home) {
+        if (!c.leaving && c.idleFor > 2.5 && jumlahAktif > batasAgen && !c.home) {
           c.leaving = true;
           c.gen = keluar(c);
         }
