@@ -23,8 +23,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const [storageMode, setStorageMode] = useState<string>('filesystem');
 
   async function refreshSiteData() {
-    // Penanda global: dipakai layer Swarm supaya ia mengukur halaman SETELAH
-    // data (dan font) final, bukan saat teks masih versi bawaan.
+    // Penanda global: data (dan font) sudah final, bukan teks versi bawaan.
     const tandaiSiap = () => document.documentElement.setAttribute('data-content', 'ready');
     try {
       const res = await fetch('/api/content', { cache: 'no-store' });
@@ -40,10 +39,6 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         }
         if (!incoming.personal?.video) {
           incoming.personal.video = structuredClone(DEFAULT_DATA.personal.video);
-        }
-        // Data yang tersimpan sebelum Fase 2 belum punya blok `swarm`.
-        if (!incoming.swarm || typeof incoming.swarm !== 'object') {
-          incoming.swarm = structuredClone(DEFAULT_DATA.swarm);
         }
         setSiteData(incoming);
         if (body.storageMode) setStorageMode(body.storageMode);
