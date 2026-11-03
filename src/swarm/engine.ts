@@ -36,7 +36,7 @@ interface Pekerja extends SwarmAgent {
 const SVG_KURSOR = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M5 3l14 8.2-6.2 1.4L10 20z" fill="currentColor" stroke="#0b0e13" stroke-width="1.1" stroke-linejoin="round"/></svg>`;
 
 export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
-  const { host, items, speed, background, onDone } = opsi;
+  const { host, items, speed, background, onDone, bunyi } = opsi;
   const jumlahAgen = Math.max(1, Math.min(opsi.agents || 5, NAMA_AGEN.length));
 
   const stage = document.createElement('div');
@@ -121,6 +121,8 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
   });
 
   let sisa = antrean.length;
+  /** Jumlah karakter terakhir per agen — supaya klik ketikan tidak dobel. */
+  const hitungTerakhir = new WeakMap<Pekerja, number>();
   let berhenti = false;
   let rampung = false;
   let raf = 0;
@@ -167,6 +169,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     if (rampung) return;
     rampung = true;
     window.clearTimeout(watchdog);
+    bunyi?.selesai();
     window.setTimeout(() => {
       if (!berhenti) onDone();
     }, 420);
@@ -216,6 +219,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
           p.m = 0;
           p.durasi = 170 / speed;
           if (p.tugas) p.tugas.kotak.classList.add('muncul');
+          bunyi?.gambar();
         }
       } else if (p.fase === 'isi') {
         const t = clamp(p.m / p.durasi, 0, 1);
@@ -241,6 +245,11 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
           const maju = item.text.length ? n / item.text.length : 1;
           p.x = item.x + clamp(item.w * maju, 2, Math.max(2, item.w - 2));
           p.y = item.y + Math.min(item.h - 2, item.fontSize * 1.2);
+          // Klik ketikan — cuma kalau jumlah karakternya bertambah.
+          if (n !== hitungTerakhir.get(p)) {
+            hitungTerakhir.set(p, n);
+            bunyi?.ketik();
+          }
         }
         if (t >= 1) {
           if (p.tugas?.teks) {

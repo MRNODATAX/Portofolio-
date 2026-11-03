@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { GAYA_SWARM } from './styles';
 import { mulaiSwarm } from './engine';
 import { ukurHeroStabil, warnaLatar } from './snapshot';
+import { mulaiBunyiSwarm, type BunyiSwarm } from './suara';
+import { announceSwarmDuck } from '../lib/audioBus';
 import type { SwarmHandle } from './types';
 import './swarm.css';
 
@@ -10,53 +12,18 @@ interface Props {
   agents: number;
   speed: number;
   onDone: () => void;
+  /** Bunyi sintetis dinyalakan (aturan PR #7 sudah diperhitungkan oleh hook). */
+  suara: boolean;
 }
 
 /**
- * Apakah masih ada animasi/transisi berdurasi terbatas yang berjalan di hero?
- * Selama `.portrait-assembly` memudar (opacity 0 → 1) Chrome meratakan 3D-nya,
- * sehingga `translateZ(58px)` chip CURRENTLY EXPLORING belum mengembang dan
- * posisinya meleset ~10px. Karena itu pengukuran ditahan sampai animasi selesai.
- * Animasi tanpa henti (portrait-hover, glass-reflect, …) diabaikan.
+ * Layer "Swarm": menutupi layar, mengukur hero, lalu menggambar ulang kerangkanya
+ * dengan beberapa kursor. Situs aslinya TIDAK diubah — begini cara paling aman:
+ * kalau apa pun gagal, layer tinggal memudar (fail-open).
  */
-function heroTenang(): boolean {
-  const hero = document.querySelector('.hero');
-  if (!hero) return true;
-  return !document.getAnimations().some((a) => {
-    const target = (a.effect as KeyframeEffect | null)?.target;
-    if (!(target instanceof Element) || !hero.contains(target)) return false;
-    const putaran = (a.effect?.getTiming?.() as { iterations?: number } | undefined)?.iterations;
-    if (putaran === Infinity || putaran === null) return false;
-    return a.playState === 'running';
-  });
-}
-
-/**
- * Tunggu sampai data situs selesai dimuat (`/api/content`), font aktif, dan
- * animasi masuk hero berhenti. Kalau diukur sebelum itu, teks yang tertangkap
- * masih versi bawaan dan rect elemen 3D belum final. Batas 2,5 detik supaya
- * tetap fail-open walau jaringan lambat/gagal.
- */
-function tungguSiap(): Promise<void> {
-  const batas = performance.now() + 2500;
-  return new Promise((selesai) => {
-    const periksa = () => {
-      const data = document.documentElement.getAttribute('data-content') === 'ready';
-      const font = !document.fonts || document.fonts.status === 'loaded';
-      if ((data && font && heroTenang()) || performance.now() > batas) selesai();
-      else window.setTimeout(periksa, 120);
-    };
-    periksa();
-  });
-}
-
-/**
- * Fase 1 (spike): layer yang menutupi layar, mengukur hero, lalu menggambar
- * ulang kerangkanya dengan beberapa kursor. Situs aslinya TIDAK diubah —
- * begini cara paling aman: kalau apa pun gagal, layer tinggal memudar.
- */
-export default function SwarmLayer({ agents, speed, onDone }: Props) {
+export default function SwarmLayer({ agents, speed, onDone, suara }: Props) {
   const bayangan = useRef<HTMLDivElement>(null);
+  const bunyi = useRef<BunyiSwarm | null>(null);
   const keluar = useRef(false);
   const [pergi, setPergi] = useState(false);
 
@@ -65,6 +32,12 @@ export default function SwarmLayer({ agents, speed, onDone }: Props) {
     keluar.current = true;
     setPergi(true);
     document.documentElement.removeAttribute('data-swarm');
+    // Kembalikan backsound dan lepas sumber daya audio (aturan PR #7).
+    if (bunyi.current) {
+      announceSwarmDuck(false);
+      bunyi.current.tutup();
+      bunyi.current = null;
+    }
     window.setTimeout(onDone, 320);
   }
 
@@ -104,6 +77,15 @@ export default function SwarmLayer({ agents, speed, onDone }: Props) {
 
         document.documentElement.setAttribute('data-swarm', 'on');
 
+        // Bunyi sintetis — hanya bila diizinkan; kalau gagal, efek tetap bisu.
+        if (suara) {
+          const b = mulaiBunyiSwarm();
+          if (b) {
+            bunyi.current = b;
+            announceSwarmDuck(true);
+          }
+        }
+
         pegang = mulaiSwarm({
           host: wadah,
           items,
@@ -111,6 +93,7 @@ export default function SwarmLayer({ agents, speed, onDone }: Props) {
           speed,
           background: warnaLatar(),
           onDone: tutup,
+          bunyi: bunyi.current,
         });
       } catch {
         // Fail-open: error apa pun → tampilkan halaman normal.
@@ -123,6 +106,11 @@ export default function SwarmLayer({ agents, speed, onDone }: Props) {
       waktu.forEach((id) => window.clearTimeout(id));
       pegang?.cancel();
       document.documentElement.removeAttribute('data-swarm');
+      if (bunyi.current) {
+        announceSwarmDuck(false);
+        bunyi.current.tutup();
+        bunyi.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -144,4 +132,42 @@ export default function SwarmLayer({ agents, speed, onDone }: Props) {
       </button>
     </div>
   );
+}
+
+/**
+ * Apakah masih ada animasi/transisi berdurasi terbatas yang berjalan di hero?
+ * Selama `.portrait-assembly` memudar (opacity 0 → 1) Chrome meratakan 3D-nya,
+ * sehingga `translateZ(58px)` chip CURRENTLY EXPLORING belum mengembang dan
+ * posisinya meleset ~10px. Karena itu pengukuran ditahan sampai animasi selesai.
+ * Animasi tanpa henti (portrait-hover, glass-reflect, …) diabaikan.
+ */
+function heroTenang(): boolean {
+  const hero = document.querySelector('.hero');
+  if (!hero) return true;
+  return !document.getAnimations().some((a) => {
+    const target = (a.effect as KeyframeEffect | null)?.target;
+    if (!(target instanceof Element) || !hero.contains(target)) return false;
+    const putaran = (a.effect?.getTiming?.() as { iterations?: number } | undefined)?.iterations;
+    if (putaran === Infinity || putaran === null) return false;
+    return a.playState === 'running';
+  });
+}
+
+/**
+ * Tunggu sampai data situs selesai dimuat (`/api/content`), font aktif, dan
+ * animasi masuk hero berhenti. Kalau diukur sebelum itu, teks yang tertangkap
+ * masih versi bawaan dan rect elemen 3D belum final. Batas 2,5 detik supaya
+ * tetap fail-open walau jaringan lambat/gagal.
+ */
+function tungguSiap(): Promise<void> {
+  const batas = performance.now() + 2500;
+  return new Promise((selesai) => {
+    const periksa = () => {
+      const data = document.documentElement.getAttribute('data-content') === 'ready';
+      const font = !document.fonts || document.fonts.status === 'loaded';
+      if ((data && font && heroTenang()) || performance.now() > batas) selesai();
+      else window.setTimeout(periksa, 120);
+    };
+    periksa();
+  });
 }

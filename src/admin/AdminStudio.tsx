@@ -336,6 +336,22 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
     setDirty(true);
   }
 
+  /* ── Pengaturan efek Swarm (kursor gerombolan) ─────────────────────────── */
+  /**
+   * Menyunting blok `swarm`. Data lama yang belum punya blok ini diberi nilai
+   * bawaan lebih dulu — jadi admin tidak pernah menulis ke objek `undefined`.
+   */
+  function ubahSwarm(ubah: (s: { enabled: boolean; auto: boolean; speed: number; agents: { desktop: number; mobile: number }; sound: boolean }) => void) {
+    updateDraft((d) => {
+      const s = d.swarm ?? { enabled: true, auto: true, speed: 1, agents: { desktop: 6, mobile: 4 }, sound: true };
+      const agen = s.agents ?? { desktop: 6, mobile: 4 };
+      s.agents = agen;
+      ubah(s);
+      d.swarm = s;
+      return d;
+    });
+  }
+
   /* ── CRUD kartu foto stack 3D di Hero ───────────────────────────────────── */
   const heroCards: HeroStackCard[] = Array.isArray(draft.identity.heroCards) ? draft.identity.heroCards : [];
 
@@ -3160,6 +3176,88 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                   memengaruhi pengunjung yang <em>pernah</em> menyalakan musik: preferensinya diingat, lalu musik
                   lanjut menyala sendiri setelah ia menyentuh halaman satu kali. Nilai bawaan (Tidak) membuat
                   backsound sepenuhnya dikendalikan tombol.
+                </p>
+              </div>
+
+              <div className="admin-card">
+                <h3>Efek Swarm (Kursor Gerombolan)</h3>
+                <p className="admin-note">
+                  Efek pembuka: beberapa kursor menggambar ulang hero lebih dulu sebelum halaman tampil utuh.
+                  Berjalan otomatis setiap kali halaman dimuat dan selalu bisa dilewati tombol{' '}
+                  <strong>Lewati</strong> atau tombol <strong>Esc</strong>.
+                </p>
+                <div className="admin-grid-3">
+                  <div className="admin-field">
+                    <label>Tampilkan Efek</label>
+                    <select
+                      value={draft.swarm?.enabled === false ? 'no' : 'yes'}
+                      onChange={(e) => ubahSwarm((s) => { s.enabled = e.target.value === 'yes'; })}
+                    >
+                      <option value="yes">Ya — aktif</option>
+                      <option value="no">Tidak — matikan total</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Tayang Otomatis</label>
+                    <select
+                      value={draft.swarm?.auto === false ? 'no' : 'yes'}
+                      onChange={(e) => ubahSwarm((s) => { s.auto = e.target.value === 'yes'; })}
+                    >
+                      <option value="yes">Ya — setiap halaman dimuat / di-refresh</option>
+                      <option value="no">Tidak — hanya lewat ?swarm=1</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Bunyi Efek</label>
+                    <select
+                      value={draft.swarm?.sound === false ? 'no' : 'yes'}
+                      onChange={(e) => ubahSwarm((s) => { s.sound = e.target.value === 'yes'; })}
+                    >
+                      <option value="yes">Ya — bunyi sintetis (nol kB)</option>
+                      <option value="no">Tidak — efek bisu</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Kecepatan</label>
+                    <select
+                      value={String(draft.swarm?.speed ?? 1)}
+                      onChange={(e) => ubahSwarm((s) => { s.speed = Number(e.target.value); })}
+                    >
+                      <option value="0.8">Lambat — lebih dramatis</option>
+                      <option value="1">Normal</option>
+                      <option value="1.3">Cepat — lebih singkat</option>
+                    </select>
+                  </div>
+                  <div className="admin-field">
+                    <label>Jumlah Kursor — Desktop</label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={8}
+                      value={draft.swarm?.agents?.desktop ?? 6}
+                      onChange={(e) =>
+                        ubahSwarm((s) => { s.agents.desktop = Math.max(2, Math.min(8, Number(e.target.value) || 6)); })
+                      }
+                    />
+                  </div>
+                  <div className="admin-field">
+                    <label>Jumlah Kursor — HP</label>
+                    <input
+                      type="number"
+                      min={2}
+                      max={8}
+                      value={draft.swarm?.agents?.mobile ?? 4}
+                      onChange={(e) =>
+                        ubahSwarm((s) => { s.agents.mobile = Math.max(2, Math.min(8, Number(e.target.value) || 4)); })
+                      }
+                    />
+                  </div>
+                </div>
+                <p className="admin-note">
+                  Bunyi efek menuruti aturan backsound di atas: hanya terdengar bila pengunjung{' '}
+                  <em>sudah</em> menyalakan backsound sendiri (tidak ada autoplay), dan selama efek berjalan
+                  backsound diredam sementara. Kalau mau efeknya benar-benar senyap, matikan saja{' '}
+                  <strong>Bunyi Efek</strong> di sini.
                 </p>
               </div>
             </>

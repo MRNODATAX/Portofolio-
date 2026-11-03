@@ -447,7 +447,13 @@ export default function App() {
       <RelayBubble />
       {swarm.aktif && (
         <Suspense fallback={null}>
-          <SwarmLayer key={swarm.putaran} agents={swarm.agents} speed={swarm.speed} onDone={swarm.tutup} />
+          <SwarmLayer
+            key={swarm.putaran}
+            agents={swarm.agents}
+            speed={swarm.speed}
+            suara={swarm.suara}
+            onDone={swarm.tutup}
+          />
         </Suspense>
       )}
     </>

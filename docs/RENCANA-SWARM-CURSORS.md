@@ -344,3 +344,74 @@ animasi masuk dinyatakan selesai (`heroTenang()` memakai `document.getAnimations
 - Pengaturan di `/admin` (kolom `swarm` di `shared/site-data.json`: `enabled, autoOnce, scope, speed, agents, sound`).
 - Memperluas cakupan dari hero ke section lain.
 - Demo video (pengganti yang tak sempat pasang ekstensi).
+## 13. Rencana Fase 2 (final, disetujui Mas — 3 November 2026)
+
+Tiga keputusan Mas:
+
+1. **Tayang otomatis setiap kali halaman dimuat / di-refresh. Tidak ada tombol ulangi.**
+   Kalau tidak di-refresh, animasi tidak perlu mulai lagi.
+2. **Pengaturan digabung ke tab "Backsound & Suara"** di `/admin` (bukan tab baru).
+3. **Bunyi sintetis** (WebAudio, nol kB) — tidak perlu upload berkas apa pun.
+
+### Yang dikerjakan
+
+| # | Bagian | Menyentuh |
+|---|---|---|
+| 1 | Blok data `swarm` | `src/types.ts`, `shared/site-data.json`, `SiteDataContext.tsx` (normalisasi) |
+| 2 | Pengaturan di tab "Backsound & Suara" | `src/admin/AdminStudio.tsx` |
+| 3 | Tayang otomatis untuk semua pengunjung | `src/hooks/useSwarmIntro.ts`, `src/App.tsx` |
+| 4 | Bunyi sintetis + aturan eksklusif PR #7 | `src/swarm/suara.ts` (baru), `src/lib/audioBus.ts`, `src/swarm/engine.ts` |
+
+### 1. Blok data `swarm`
+
+```json
+"swarm": {
+  "enabled": true,
+  "auto": true,
+  "speed": 1,
+  "agents": { "desktop": 6, "mobile": 4 },
+  "sound": true
+}
+```
+
+- `enabled` — matikan total tanpa menyentuh kode.
+- `auto` — tayang sendiri setiap halaman dimuat (nilai `false` mengembalikan perilaku
+  Fase 1: hanya lewat `?swarm=1`).
+- `speed` — `0.8` lambat, `1` normal, `1.3` cepat.
+- `agents` — jumlah kursor desktop & mobile.
+- `sound` — izinkan bunyi sintetis; tetap tunduk pada aturan PR #7 di bawah.
+
+Data lama yang belum punya blok `swarm` otomatis diberi nilai bawaan (normalisasi di
+`SiteDataContext.tsx`, pola yang sama seperti `certificates` & `heroCards`).
+
+### 2. Pengaturan di `/admin`
+
+Masuk ke tab **"Backsound & Suara"**, bagian baru **"Efek Swarm (kursor gerombolan)"**:
+saklar aktif, saklar tayang-otomatis, pilihan kecepatan, jumlah kursor desktop & mobile,
+saklar bunyi. Tersimpan lewat jalur `/api/content` yang sudah ada.
+
+### 3. Tayang otomatis
+
+- Jalan sendiri setelah intro selesai, **setiap kali halaman dimuat ulang**.
+- **Tidak ada tombol ulangi** (sesuai permintaan Mas) dan tidak ada batas "sekali per
+  pengunjung" — refresh = tayang lagi.
+- Tetap dihormati: `prefers-reduced-motion`, `saveData`, koneksi 2g, tombol **Lewati**, **Esc**.
+- Flag `?swarm=1` tetap berguna untuk menguji, `?swarm=0` untuk mematikan sementara.
+
+### 4. Bunyi sintetis + aturan PR #7
+
+Bunyi dibuat dengan WebAudio (ketikan pelan + nada piano kaca), jadi **nol kilobyte** dan
+tidak perlu upload. Aturan PR #7 tetap berlaku:
+
+- Backsound **harus dinyalakan manual** dulu oleh pengunjung. Kalau tidak, efek **tetap bisu**.
+- Selama efek berjalan, backsound **diredam sementara** (aturan saling eksklusif PR #7),
+  lalu dikembalikan setelahnya.
+- Tombol suara di header tetap jadi pusat kendali: matikan di situ → efek ikut bisu.
+- Tidak ada autoplay dalam bentuk apa pun.
+
+### Risiko yang perlu dicatat
+
+Efek ±5–6 detik kini tampil **untuk setiap pengunjung pada setiap kunjungan**. Karena itu
+tombol **Lewati** dan **Esc** wajib tetap ada dan mudah terlihat, dan durasi efek akan
+dijaga tetap di bawah 6 detik. Kalau nanti terasa mengganggu, `auto` bisa dimatikan
+langsung dari `/admin` tanpa deploy ulang.

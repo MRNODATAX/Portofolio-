@@ -786,7 +786,7 @@
     "video": {
       "url": "https://res.cloudinary.com/dhxfke7kq/video/upload/v1791439342/Ssstt/wnudrzps2bdshrcyykkw.mp4",
       "poster": "/posters/cote.webp",
-      "rotation": -90,
+      "rotation": 270,
       "fit": "cover",
       "title": "Classroom of the Elite"
     },
@@ -807,6 +807,16 @@
     "autoStart": false,
     "pauseVideo": true,
     "label": "Backsound"
+  },
+  "swarm": {
+    "enabled": true,
+    "auto": true,
+    "speed": 1,
+    "agents": {
+      "desktop": 6,
+      "mobile": 4
+    },
+    "sound": true
   },
   "relay": {
     "chapterTitle": "RELAY / A PERSONAL CONNECTION",
