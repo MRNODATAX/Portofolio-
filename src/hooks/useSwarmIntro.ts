@@ -52,11 +52,9 @@ export function useSwarmIntro(): SwarmState {
     typeof window !== 'undefined' &&
     (window.matchMedia('(max-width: 900px)').matches || window.matchMedia('(pointer: coarse)').matches);
 
-  // Fase 3A: jumlah kursor = jumlah minimum yang dipertahankan (bawaan 8,
-  // sesuai spesifikasi referensi). HP diperlakukan sama seperti desktop.
   const agenMentah = ringan ? swarm?.agents?.mobile : swarm?.agents?.desktop;
-  const agents = Math.round(angka(agenMentah, 8, 4, 24));
-  const speed = angka(swarm?.speed, 1, 0.6, 1.8);
+  const agents = Math.round(angka(agenMentah, ringan ? 4 : 6, 2, 8));
+  const speed = angka(swarm?.speed, 1, 0.6, 1.8) * (ringan ? 1.15 : 1);
 
   const diizinkan = swarm?.enabled !== false;
   const otomatis = swarm?.auto !== false;
