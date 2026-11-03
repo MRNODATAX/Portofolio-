@@ -187,6 +187,24 @@ export interface SiteData {
     autoStart: boolean;
     pauseVideo: boolean;
   };
+  /**
+   * Efek "Swarm": gerombolan kursor yang membangun ulang hero.
+   * Fase 2: tayang otomatis untuk semua pengunjung, tanpa tombol ulangi.
+   */
+  swarm: {
+    /** Matikan total tanpa menyentuh kode. */
+    enabled: boolean;
+    /** Tayang sendiri setiap kali halaman dimuat / di-refresh. */
+    auto: boolean;
+    /** 1 = normal; makin kecil = makin lambat, makin besar = makin cepat. */
+    speed: number;
+    agents: { desktop: number; mobile: number };
+    /**
+     * Bunyi sintetis (WebAudio). Tetap tunduk pada aturan PR #7: hanya terdengar
+     * bila pengunjung sudah menyalakan backsound sendiri (tidak ada autoplay).
+     */
+    sound: boolean;
+  };
   relay: {
     chapterTitle: string;
     headingLine1: string;

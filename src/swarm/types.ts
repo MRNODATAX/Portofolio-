@@ -1,3 +1,5 @@
+import type { BunyiSwarm } from './suara';
+
 /**
  * Tipe untuk mesin "Swarm" — gerombolan kursor yang membangun ulang Hero.
  *
@@ -50,6 +52,8 @@ export interface SwarmOptions {
   speed: number;
   background: string;
   onDone: () => void;
+  /** Bunyi sintetis opsional (null / tidak diisi = efek bisu). */
+  bunyi?: BunyiSwarm | null;
 }
 
 export const NAMA_AGEN = [

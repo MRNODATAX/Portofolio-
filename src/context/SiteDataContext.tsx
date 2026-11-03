@@ -41,6 +41,10 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         if (!incoming.personal?.video) {
           incoming.personal.video = structuredClone(DEFAULT_DATA.personal.video);
         }
+        // Data yang tersimpan sebelum Fase 2 belum punya blok `swarm`.
+        if (!incoming.swarm || typeof incoming.swarm !== 'object') {
+          incoming.swarm = structuredClone(DEFAULT_DATA.swarm);
+        }
         setSiteData(incoming);
         if (body.storageMode) setStorageMode(body.storageMode);
         tandaiSiap();
