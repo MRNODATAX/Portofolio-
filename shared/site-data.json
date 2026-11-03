@@ -808,16 +808,6 @@
     "pauseVideo": true,
     "label": "Backsound"
   },
-  "swarm": {
-    "enabled": true,
-    "auto": true,
-    "speed": 1,
-    "agents": {
-      "desktop": 6,
-      "mobile": 4
-    },
-    "sound": true
-  },
   "relay": {
     "chapterTitle": "RELAY / A PERSONAL CONNECTION",
     "headingLine1": "A different way",

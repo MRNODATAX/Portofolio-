@@ -4,7 +4,6 @@ import { useSiteData } from '../context/SiteDataContext';
 import {
   announceMusicStart,
   announceMusicStop,
-  onSwarmDuck,
   onVideoAudioOn,
 } from '../lib/audioBus';
 
@@ -159,18 +158,6 @@ export default function SoundToggle({ className = '' }: { className?: string }) 
 
   // Musik berhenti bila pengunjung menyalakan audio video (perilaku saling eksklusif).
   useEffect(() => onVideoAudioOn(() => stop(false)), [stop]);
-
-  // Efek Swarm bersuara → backsound diredam sementara, lalu dikembalikan.
-  // Ini versi audio dari aturan saling eksklusif PR #7.
-  useEffect(
-    () =>
-      onSwarmDuck((aktif) => {
-        const el = audio.current;
-        if (!el || el.paused) return;
-        fadeTo(aktif ? 0 : baseVolume);
-      }),
-    [baseVolume, fadeTo],
-  );
 
   // Mode "ingat preferensi" (autoStart): pengunjung yang pernah menyalakan musik
   // akan didengarkan lagi — menyala otomatis setelah interaksi pertama, bukan begitu
