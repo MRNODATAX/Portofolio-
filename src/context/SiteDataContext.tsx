@@ -23,6 +23,9 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const [storageMode, setStorageMode] = useState<string>('filesystem');
 
   async function refreshSiteData() {
+    // Penanda global: dipakai layer Swarm supaya ia mengukur halaman SETELAH
+    // data (dan font) final, bukan saat teks masih versi bawaan.
+    const tandaiSiap = () => document.documentElement.setAttribute('data-content', 'ready');
     try {
       const res = await fetch('/api/content', { cache: 'no-store' });
       if (!res.ok) return;
@@ -40,9 +43,12 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         }
         setSiteData(incoming);
         if (body.storageMode) setStorageMode(body.storageMode);
+        tandaiSiap();
       }
     } catch {
       // Keep bundled seed if offline
+    } finally {
+      tandaiSiap();
     }
   }
 
