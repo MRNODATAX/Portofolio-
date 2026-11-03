@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { GAYA_SWARM } from './styles';
 import { mulaiSwarm } from './engine';
-import { ukurHeroStabil, warnaLatar } from './snapshot';
+import { ukurHalaman, ukurHeroStabil, warnaLatar } from './snapshot';
 import { mulaiBunyiSwarm, type BunyiSwarm } from './suara';
 import { announceSwarmDuck } from '../lib/audioBus';
 import type { SwarmHandle } from './types';
@@ -17,9 +17,10 @@ interface Props {
 }
 
 /**
- * Layer "Swarm": menutupi layar, mengukur hero, lalu menggambar ulang kerangkanya
- * dengan beberapa kursor. Situs aslinya TIDAK diubah — begini cara paling aman:
- * kalau apa pun gagal, layer tinggal memudar (fail-open).
+ * Layer "Swarm": menutupi layar, mengukur SELURUH halaman (Fase 3B), lalu
+ * menggambar ulang kerangkanya dengan gerombolan kursor sambil menggulir
+ * mengikuti pekerjaan (Tour). Situs aslinya TIDAK diubah — begini cara paling
+ * aman: kalau apa pun gagal, layer tinggal memudar (fail-open).
  */
 export default function SwarmLayer({ agents, speed, onDone, suara }: Props) {
   const bayangan = useRef<HTMLDivElement>(null);
@@ -60,7 +61,10 @@ export default function SwarmLayer({ agents, speed, onDone, suara }: Props) {
 
     async function jalankan() {
       try {
-        const items = await ukurHeroStabil();
+        // Seluruh halaman (Fase 3B). Kalau pemindai gagal menghasilkan apa pun,
+        // jatuh ke pemindai hero lama — lebih baik sedikit daripada tidak ada.
+        let items = ukurHalaman();
+        if (!items.length) items = await ukurHeroStabil();
         if (!items.length) {
           // Tidak ada yang bisa digambar → langsung lepas layar (fail-open).
           atur(tutup, 60);

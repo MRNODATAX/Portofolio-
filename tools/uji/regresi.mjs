@@ -22,7 +22,7 @@ async function halamanBaru({ lebar = 1440, tinggi = 900, kurangiGerakan = false,
   await p.setViewport({ width: lebar, height: tinggi });
   await p.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: kurangiGerakan ? 'reduce' : 'no-preference' }]);
   p.__err = [];
-  p.on('console', (m) => { if (m.type() === 'error') p.__err.push(m.text()); });
+  p.on('console', (m) => { if (m.type() === 'error' && !/ERR_CONNECTION_CLOSED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED/.test(m.text())) p.__err.push(m.text()); });
   p.on('pageerror', (e) => p.__err.push(String(e)));
   await p.goto(url, { waitUntil: 'networkidle2', timeout: 90000 });
   return p;
@@ -84,7 +84,7 @@ async function halamanBaru({ lebar = 1440, tinggi = 900, kurangiGerakan = false,
   cek('7. gerombolan kursor dibuat (≥ 12)', kursor >= 12, `${kursor} kursor`);
 
   let hilang = false;
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 900; i++) {
     hilang = await p.evaluate(() => !document.querySelector('.swarm-shadow'));
     if (hilang) break;
     await new Promise((r) => setTimeout(r, 200));
@@ -110,7 +110,7 @@ async function halamanBaru({ lebar = 1440, tinggi = 900, kurangiGerakan = false,
   cek('10. HP: jumlah kursor sama seperti desktop (≥ 12)', kursor >= 12, `${kursor} kursor`);
 
   let hilang = false;
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 900; i++) {
     hilang = await p.evaluate(() => !document.querySelector('.swarm-shadow'));
     if (hilang) break;
     await new Promise((r) => setTimeout(r, 200));

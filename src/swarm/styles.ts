@@ -36,7 +36,20 @@ export const GAYA_SWARM = `
   overflow: hidden;
   display: flex;
   align-items: center;
+  transition: opacity 0.22s ease, clip-path 0.6s cubic-bezier(0.2, 0.75, 0.2, 1);
 }
+
+/* Kotak yang sudah selesai ditarik kursor: muncul perlahan.
+   Tanpa aturan ini kotak tak pernah terlihat (opacity tetap 0). */
+.kotak.muncul { opacity: 1; }
+
+/* Gambar: dibuka dengan sapuan dari atas ke bawah seperti referensi. */
+.kotak.gambar {
+  background-size: cover;
+  background-position: center;
+  clip-path: inset(0 0 100% 0);
+}
+.kotak.gambar.muncul { clip-path: inset(0); }
 
 .teks {
   width: 100%;

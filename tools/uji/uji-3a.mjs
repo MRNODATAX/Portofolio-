@@ -22,7 +22,7 @@ const cek = (nama, ok, info = '') => {
 
 const page = await browser.newPage();
 const err = [];
-page.on('console', (m) => { if (m.type() === 'error') err.push(m.text()); });
+page.on('console', (m) => { if (m.type() === 'error' && !/ERR_CONNECTION_CLOSED|ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED/.test(m.text())) err.push(m.text()); });
 page.on('pageerror', (e) => err.push(String(e)));
 await page.setViewport({ width: 1440, height: 900 });
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
@@ -36,8 +36,10 @@ for (let i = 0; i < 200; i++) {
   if (siap) break;
   await new Promise((r) => setTimeout(r, 50));
 }
+// Sejak Fase 3B cakupannya seluruh halaman (ratusan item + Tour), jadi efek
+// bisa berjalan puluhan detik. Beri ruang sampai 3 menit.
 const tSelesai = Date.now();
-for (let i = 0; i < 300; i++) {
+for (let i = 0; i < 1800; i++) {
   if (await page.evaluate(() => !document.querySelector('.swarm-shadow'))) break;
   await new Promise((r) => setTimeout(r, 100));
 }

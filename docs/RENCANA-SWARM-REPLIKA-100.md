@@ -314,3 +314,36 @@ Catatan penting:
   kursor) karena yang membatasi adalah gaya radial `clamp((rr-d)×4, -2600, 1400)`
   — sama persis dengan rumus referensi. Bedanya baru terasa saat mengitar
   (spin) dan saat mengetik.
+
+---
+
+## 12. Fase 3B — seluruh halaman + Tour (selesai 2026-11-03)
+
+### 12.1 Yang dikerjakan
+
+| Bagian | Perubahan |
+|---|---|
+| `snapshot.ts` | Pemindai baru `ukurHalaman()`: menelusuri seluruh DOM (bukan 16 kotak hero yang ditentukan), mengumpulkan `box` / `image` / `text` / `pill` dalam **koordinat dokumen** (`rect + scrollY`), dibatasi 700 item & tinggi dunia 40.000 px. Pemindai hero lama tetap dipakai sebagai cadangan bila hasilnya kosong. |
+| `engine.ts` | Layer `dunia` setinggi dokumen digeser berlawanan guliran; orbit, lahir & keluar kursor kini memakai koordinat dokumen. **Tour**: layar mengikuti tugas teratas yang belum dikerjakan, digulir mulus dengan batas 1.600 px/s. Pengawas waktu absolut (dulu 20 detik tetap) diganti pengawas kemajuan (6 detik tanpa ada kursor bekerja) + batas waktu engine 240 detik + jaring absolut yang menyesuaikan jumlah item. |
+| `styles.ts` | **Perbaikan besar**: aturan `.kotak.muncul` selama ini TIDAK ADA — kotak yang sudah selesai ditarik tetap `opacity: 0`, jadi halaman tak pernah benar-benar tampak terbangun. Ini biang utama keluhan "animasinya jelek". Kini ada transisi muncul 0,22 s dan sapuan `clip-path` 0,6 s untuk gambar. |
+| `swarm.css` | Kunci guliran dibuka (`overflow:hidden` dihapus) — guliran justru diperlukan Tour; pengunjung tetap boleh menggulir manual. |
+| `SwarmLayer.tsx` | Memakai `ukurHalaman()`; posisi gulir & `scroll-behavior` dikembalikan seperti sediakala saat efek usai atau dilewati. |
+
+### 12.2 Hasil terukur
+
+- **608 item** terbangun (65 box, 423 teks, 119 pill, 1 gambar) dari dokumen setinggi **11.038 px**.
+- Efek berjalan **~39 detik** dan menggulir dari 0 ke **9.954 px** dengan sendirinya — masuk target 20–45 detik yang Mas setujui, tidak dipotong.
+- Kursor tetap 15–18 selama pembangunan.
+
+| Pengujian | Hasil |
+|---|---|
+| `tools/uji/uji-3a.mjs` | **11/11 lulus** |
+| `tools/uji/uji-kinerja.mjs` | **4/4 lulus** (fps 21 → 18 kursor menyusut ke 4, pembangunan tetap jalan) |
+| `tools/uji/regresi.mjs` | **16/16 lulus** (desktop & HP) |
+| `tsc --noEmit` / `npm run build` | bersih / ok |
+
+### 12.3 Catatan & pekerjaan rumah
+
+- Hanya **1 gambar** yang terdeteksi: sebagian besar gambar situs dipasang sebagai `background-image` pada elemen lain atau berukuran < 1.600 px². Perlu penyetelan pemindai (atau menunggu Fase 3D/3G yang memakai sapuan gambar sungguhan).
+- Di HP (layar 390 px) halaman lebih tinggi, jumlah item bisa melewati batas 700 → bagian paling bawah belum tergambar. Perlu dipertimbangkan menaikkan batas atau memotong item kecil.
+- **HUD belum ada** (Fase 3F): pengunjung baru punya tombol *Lewati* dan Esc. Dengan durasi ~39 detik, progres & tombol *Go live* jadi penting.

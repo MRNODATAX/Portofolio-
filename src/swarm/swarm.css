@@ -50,9 +50,6 @@
   pointer-events: none;
 }
 
-/* Kunci guliran selama efek berjalan (posisi diukur sekali di awal). */
-html[data-swarm='on'],
-html[data-swarm='on'] body {
-  overflow: hidden !important;
-  touch-action: none;
-}
+/* Fase 3B: guliran TIDAK dikunci — efek menggulir sendiri (Tour) mengikuti
+   pekerjaan, dan pengunjung tetap boleh menggulir manual kapan saja.
+   Posisi item diukur dalam koordinat dokumen, jadi tetap akurat. */

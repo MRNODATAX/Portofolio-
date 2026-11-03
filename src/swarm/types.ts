@@ -9,7 +9,7 @@ import type { BunyiSwarm } from './suara';
  * seperti biasa (fail-open).
  */
 
-export type ItemKind = 'box' | 'text' | 'button' | 'pill';
+export type ItemKind = 'box' | 'text' | 'button' | 'pill' | 'image';
 
 export interface SwarmItem {
   id: string;
@@ -31,6 +31,8 @@ export interface SwarmItem {
   align: 'left' | 'center' | 'right';
   /** Beri jeda "ketikan" sebelum item berikutnya (dipakai untuk blok teks panjang). */
   ketik: boolean;
+  /** Alamat gambar — hanya terisi untuk `kind: 'image'` (Fase 3B). */
+  src?: string;
 }
 
 export interface SwarmAgent {

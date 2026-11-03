@@ -154,3 +154,161 @@ function sama(a: SwarmItem[], b: SwarmItem[]): boolean {
   }
   return true;
 }
+
+// ── pemindai seluruh halaman (Fase 3B) ──────────────────────────────────────
+
+/**
+ * Elemen yang tidak boleh digambar ulang: skrip, elemen tersembunyi untuk
+ * pembaca layar, widget mengambang (Relay AI, gelembung obrolan) dan layer
+ * efek itu sendiri — semuanya bukan bagian dari isi halaman.
+ */
+const ABAIKAN =
+  'script, style, noscript, template, .sr-only, [aria-hidden="true"], .swarm-host, .relay-bubble, .ai-sandbox, .skip-link, .swarm-skip';
+
+/** Batas tinggi dunia (dokumen) yang mau digambar — sama seperti referensi. */
+const MAKS_TINGGI_DUNIA = 40000;
+
+/** Teks yang langsung dimiliki elemen (bukan teks anaknya). */
+function teksLangsung(el: Element): string {
+  let hasil = '';
+  el.childNodes.forEach((n) => {
+    if (n.nodeType === Node.TEXT_NODE) hasil += n.textContent || '';
+    else if (n instanceof HTMLBRElement) hasil += ' ';
+  });
+  return hasil.replace(/\s+/g, ' ').trim();
+}
+
+/** Apakah elemen ini layak digambar (terlihat & punya ukuran)? */
+function nampak(el: HTMLElement): boolean {
+  if (el.closest(ABAIKAN)) return false;
+  const cs = getComputedStyle(el);
+  if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  if (Number(cs.opacity) === 0) return false;
+  return true;
+}
+
+/** Apakah elemen punya latar/tepi/ bayangan yang terlihat? */
+function berisi(cs: CSSStyleDeclaration): boolean {
+  return Boolean(warnaEfektif(cs.backgroundColor) || (warnaEfektif(cs.borderTopColor) && angka(cs.borderTopWidth) > 0));
+}
+
+/**
+ * Mengukur SELURUH halaman menjadi blueprint — bukan cuma hero.
+ *
+ * Koordinat yang dipakai adalah koordinat DOKUMEN (world):
+ * `x = rect.left + scrollX`, `y = rect.top + scrollY`. Karena blueprint
+ * digambar di atas layer yang ikut bergulir, posisi tetap akurat walau
+ * halaman digeser saat efek berjalan (Fase 3B: Tour auto-scroll).
+ *
+ * Yang dikumpulkan:
+ * - `box`   — kartu/panel/baris yang punya latar atau tepi terlihat;
+ * - `image` — gambar (dan elemen ber-`background-image`);
+ * - `text`  — elemen yang punya teks langsung (judul, paragraf, label);
+ * - `pill`  — tombol/chip kecil dengan sudut membulat.
+ */
+export function ukurHalaman(maks = 700): SwarmItem[] {
+  if (typeof window === 'undefined' || !document.body) return [];
+
+  const gulirX = window.scrollX || 0;
+  const gulirY = window.scrollY || 0;
+  const mentah: { item: SwarmItem; skor: number }[] = [];
+  const dipakai: { x: number; y: number }[] = [];
+
+  for (const el of [...document.body.querySelectorAll<HTMLElement>('*')]) {
+    if (!nampak(el)) continue;
+    const r = el.getBoundingClientRect();
+    const y = r.top + gulirY;
+    const x = r.left + gulirX;
+    if (y > MAKS_TINGGI_DUNIA) continue;
+    if (r.width < 1 || r.height < 1) continue;
+
+    const cs = getComputedStyle(el);
+    const luas = r.width * r.height;
+    const radius = Math.min(angka(cs.borderTopLeftRadius), 28);
+    const tebal = angka(cs.borderTopWidth);
+    const warnaTepi = warnaEfektif(cs.borderTopColor);
+    const isi = warnaEfektif(cs.backgroundColor);
+    const gambarLatar = cs.backgroundImage && cs.backgroundImage !== 'none' ? cs.backgroundImage : '';
+    const teks = teksLangsung(el);
+
+    // Hindari menggambar dua kali di tempat yang sama.
+    const titik = { x: Math.round(x), y: Math.round(y) };
+    if (dipakai.some((p) => Math.abs(p.x - titik.x) < 6 && Math.abs(p.y - titik.y) < 6)) continue;
+
+    const dasar: SwarmItem = {
+      id: `h-${mentah.length}`,
+      kind: 'box',
+      x: Math.round(x),
+      y: Math.round(y),
+      w: Math.round(r.width),
+      h: Math.round(r.height),
+      fill: isi,
+      radius,
+      border: tebal > 0 && warnaTepi ? `${Math.min(tebal, 3)}px solid ${warnaTepi}` : '',
+      text: '',
+      color: cs.color || '#e8ecf3',
+      fontSize: angka(cs.fontSize, 14),
+      fontWeight: angka(cs.fontWeight, 500),
+      lineHeight: Math.max(angka(cs.lineHeight, 20), angka(cs.fontSize, 14) * 1.1),
+      font: cs.fontFamily || 'Manrope, system-ui, sans-serif',
+      align: (['left', 'center', 'right'].includes(cs.textAlign) ? cs.textAlign : 'left') as SwarmItem['align'],
+      ketik: false,
+    };
+
+    if (el instanceof HTMLImageElement && luas >= 1600) {
+      const src = el.currentSrc || el.src;
+      if (src) {
+        dipakai.push(titik);
+        mentah.push({
+          item: { ...dasar, kind: 'image', src, fill: isi || 'rgba(255,255,255,0.06)' },
+          skor: luas + 6000,
+        });
+        continue;
+      }
+    }
+
+    if (teks.length > 0 && luas >= 200) {
+      const potong = teks.slice(0, 90);
+      dipakai.push(titik);
+      const judul = /^H[1-6]$/.test(el.tagName);
+      mentah.push({
+        item: {
+          ...dasar,
+          kind: 'text',
+          fill: '',
+          border: '',
+          text: potong,
+          ketik: potong.length > 0 && potong.length <= 90,
+        },
+        skor: luas + (judul ? 9000 : 1500),
+      });
+      continue;
+    }
+
+    if (el instanceof HTMLButtonElement || el instanceof HTMLAnchorElement || /button|chip|pill|badge|tag/i.test(el.className || '')) {
+      if (luas >= 400) {
+        dipakai.push(titik);
+        mentah.push({ item: { ...dasar, kind: 'pill', text: teks.slice(0, 40) }, skor: luas + 3000 });
+        continue;
+      }
+    }
+
+    if (berisi(cs) || gambarLatar) {
+      if (luas >= 2500 && el.tagName !== 'BODY' && el.tagName !== 'HTML') {
+        dipakai.push(titik);
+        mentah.push({
+          item: { ...dasar, kind: 'box', fill: isi || (gambarLatar ? 'rgba(255,255,255,0.05)' : '') },
+          skor: luas + 500,
+        });
+      }
+    }
+  }
+
+  // Prioritaskan yang besar & penting, lalu urutkan atas → bawah supaya
+  // halaman "dibangun" berurutan dari atas (Tour yang enak dilihat).
+  return mentah
+    .sort((a, b) => b.skor - a.skor)
+    .slice(0, maks)
+    .map((m) => m.item)
+    .sort((a, b) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+}

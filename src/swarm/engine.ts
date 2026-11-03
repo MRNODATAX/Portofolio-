@@ -32,6 +32,8 @@ const AGEN_MAKS = 36;
  * HP mulai penuh seperti desktop, baru dikurangi kalau fps benar-benar turun).
  */
 const AGEN_LANTAI = 4;
+/** Batas tinggi dokumen yang digambar ulang (sama seperti referensi). */
+const MAKS_TINGGI_DUNIA = 40000;
 
 /** Korutin: tiap `yield` menerima `dt` (detik) dari loop animasi. */
 type Korutin = Generator<void, void, number>;
@@ -95,21 +97,51 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
   const agenMin = Math.round(clamp(opsi.agents || AGEN_MIN_BAWAAN, 4, 24));
   const agenIntro = Math.min(AGEN_MAKS, Math.max(AGEN_INTRO, agenMin));
 
+  // ── dunia & guliran (Fase 3B: seluruh halaman + Tour) ───────────────────
+  // Blueprint diukur dalam koordinat DOKUMEN. Layer `dunia` setinggi dokumen
+  // digeser berlawanan dengan guliran halaman, jadi posisi tetap pas walau
+  // halaman bergerak. Efek sendiri yang menggulir (Tour): layar mengikuti
+  // tugas yang belum dikerjakan.
+  const tinggiDunia = Math.min(
+    MAKS_TINGGI_DUNIA,
+    items.reduce((m, i) => Math.max(m, i.y + i.h), 0) + 160,
+  );
+  const gulirMaks = Math.max(0, tinggiDunia - window.innerHeight);
+  const bisaGulir = gulirMaks > 60 && tinggiDunia > window.innerHeight * 1.25;
+  const gulirAwal = window.scrollY || 0;
+  const gulirHalusAsli = document.documentElement.style.scrollBehavior;
+  let gulirSekarang = gulirAwal;
+  let gulirDipakai = -1;
+  /** Berapa detik tidak ada kursor yang mengerjakan apa pun. */
+  let tanpaKerja = 0;
+
   const stage = document.createElement('div');
   stage.className = 'stage';
   stage.style.background = background;
   host.appendChild(stage);
 
+  // `dunia` setinggi dokumen: digeser saat halaman digulir, isinya tetap diam.
+  const dunia = document.createElement('div');
+  dunia.className = 'dunia';
+  dunia.style.cssText = `position:absolute;top:0;left:0;width:100%;height:${tinggiDunia}px;will-change:transform`;
+  stage.appendChild(dunia);
+
   const lapis = document.createElement('div');
   lapis.className = 'lapis';
-  stage.appendChild(lapis);
+  dunia.appendChild(lapis);
 
   const lapisKursor = document.createElement('div');
   lapisKursor.className = 'kursor';
-  stage.appendChild(lapisKursor);
+  dunia.appendChild(lapisKursor);
+
+  if (bisaGulir) {
+    // Guliran halus CSS bikin `scrollTo` kita berlomba dengan animasinya.
+    document.documentElement.style.scrollBehavior = 'auto';
+  }
 
   const lebar = () => window.innerWidth;
   const tinggi = () => window.innerHeight;
+
 
   // ── siapkan tugas ────────────────────────────────────────────────────────
   const antrean: Tugas[] = items.map((item) => {
@@ -128,6 +160,11 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     kotak.style.borderRadius = `${item.radius}px`;
     if (item.fill) kotak.style.background = item.fill;
     if (item.border) kotak.style.border = item.border;
+    // Gambar: ditaruh sebagai latar dan dibuka dengan sapuan (kelas `gambar`).
+    if (item.kind === 'image' && item.src) {
+      kotak.classList.add('gambar');
+      kotak.style.backgroundImage = `url("${item.src}")`;
+    }
 
     let teks: HTMLDivElement | undefined;
     if (item.text) {
@@ -209,6 +246,8 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
   let fpsHalus = 60;
   let detikLambat = 0;
   let kinerjaTurun = false;
+  /** Waktu (detik engine) saat pembukaan selesai — patokan masa tenggang fps. */
+  let waktuMulai = 0;
   /** Batas jumlah kursor saat ini — menyusut bila kinerja diturunkan. */
   let batasAgen = agenMin;
   let berhenti = false;
@@ -316,7 +355,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     // Tarik kotaknya. Kalau kotaknya lebih besar dari layar, tarik cuma sampai
     // mendekati tepi — supaya kursor tidak "keluar" dari layar.
     const kanan = lebar() - 30;
-    const bawah = tinggi() - 40;
+    const bawah = (window.scrollY || 0) + tinggi() - 40;
     const akhirX = item.x + item.w > kanan ? Math.max(item.x + Math.min(item.w, 40), kanan) : item.x + item.w;
     const akhirY = item.y + item.h > bawah ? Math.max(item.y + Math.min(item.h, 40), bawah) : item.y + item.h;
 
@@ -374,7 +413,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
   function* menganggur(c: Pekerja): Korutin {
     for (;;) {
       const tx = acak(0.17, 0.83) * lebar();
-      const ty = acak(0.2, 0.8) * tinggi();
+      const ty = (window.scrollY || 0) + acak(0.2, 0.8) * tinggi();
       yield* pindah(c, tx, ty, { speed: 0.35 });
       let w = acak(0.4, 1.4);
       while (w > 0) w -= yield;
@@ -491,6 +530,11 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     if (rampung) return;
     rampung = true;
     window.clearTimeout(watchdog);
+    // Kembalikan posisi gulir & pengaturan guliran halaman seperti sediakala.
+    if (bisaGulir) {
+      window.scrollTo(0, gulirAwal);
+      document.documentElement.style.scrollBehavior = gulirHalusAsli;
+    }
     bunyi?.selesai();
     window.setTimeout(() => {
       if (!berhenti) onDone();
@@ -505,17 +549,45 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     terakhir = sekarang;
     waktu += dt;
 
+    // ── guliran (Tour): layar mengikuti tugas yang belum dikerjakan ──────
+    const gulirAsli = window.scrollY || 0;
+    if (bisaGulir) {
+      // Kalau pengunjung menggulir sendiri, ikuti saja — jangan dilawan.
+      if (Math.abs(gulirAsli - gulirSekarang) > 60) gulirSekarang = gulirAsli;
+      let atas = Infinity;
+      for (const t of antrean) if (t.state === 'wait' && t.item.y < atas) atas = t.item.y;
+      if (atas < Infinity) {
+        // Tugas teratas ditaruh agak di bawah tengah layar supaya sisa
+        // halaman yang sudah jadi masih terlihat di atasnya.
+        gulirSekarang = clamp(atas - tinggi() * 0.42, 0, gulirMaks);
+      }
+      const beda = gulirSekarang - gulirAsli;
+      if (Math.abs(beda) > 2) {
+        // Batasi kecepatan gulir supaya tidak menyentak.
+        const langkahGulir = clamp(beda * 2.4, -1600, 1600) * dt;
+        window.scrollTo(0, Math.round(clamp(gulirAsli + langkahGulir, 0, gulirMaks)));
+      }
+    }
+    const gulir = window.scrollY || 0;
+    if (gulir !== gulirDipakai) {
+      dunia.style.transform = `translate3d(0, ${-gulir}px, 0)`;
+      gulirDipakai = gulir;
+    }
+
     const sisa = tersedia();
     // Tempo global: makin banyak pekerjaan & makin banyak kursor, makin cepat.
     tempo = clamp(2.1 + (sisa.length / Math.max(1, agen.length)) * 0.5, 2.1, 4.5) * speed;
 
     // Ukur fps memakai dt engine (sudah dibatasi 0,05 s → batas bawah 20 fps).
-    // Diukur hanya setelah pembukaan lewat, supaya jank awal tidak ikut dihitung.
+    // Diukur baru 2 detik SETELAH pembukaan lewat: saat itu ratusan kotak baru
+    // saja dibuat, jadi wajar melambat sesaat — jangan dihukum untuk itu.
     if (dimulai && dt > 0) {
-      fpsHalus = fpsHalus * 0.9 + (1 / dt) * 0.1;
-      if (fpsHalus < 40) detikLambat += dt;
-      else detikLambat = 0;
-      if (!kinerjaTurun && detikLambat > 1.2) {
+      if (waktu > waktuMulai + 2) {
+        fpsHalus = fpsHalus * 0.9 + (1 / dt) * 0.1;
+        if (fpsHalus < 40) detikLambat += dt;
+        else detikLambat = 0;
+      }
+      if (!kinerjaTurun && detikLambat > 1.5) {
         kinerjaTurun = true;
         batasAgen = Math.max(AGEN_LANTAI, Math.round(agenMin / 2));
         // Usir kursor tambahan yang sedang menganggur (yang sedang pegang tugas
@@ -533,6 +605,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
 
     if (!dimulai && waktu >= mulaiPada) {
       dimulai = true;
+      waktuMulai = waktu;
       for (const c of agen) {
         c.follow = false;
         c.vx = 0;
@@ -542,7 +615,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
 
     // Kursor yang menganggur berputar mengitari tengah layar.
     const pengikut = agen.filter((c) => c.follow);
-    if (pengikut.length) ikut(dt, pengikut, lebar() / 2, tinggi() / 2, dimulai ? 1 : 0.7);
+    if (pengikut.length) ikut(dt, pengikut, lebar() / 2, gulir + tinggi() / 2, dimulai ? 1 : 0.7);
 
     // Jejak dev: posisi tiap kursor per frame — dipakai pengujian otomatis untuk
     // mengukur gerak sebenarnya (arah masuk, kecepatan, kelengkungan lintasan).
@@ -591,7 +664,7 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     const sibuk = agen.filter((c) => c.tugas).length;
     if (aktif < diinginkan && sisa.length > aktif - sibuk && jedaLahir <= 0) {
       const kiri = Math.random() < 0.5;
-      agen.push(buatAgen(kiri ? -40 : lebar() + 40, acak(0.2, 0.8) * tinggi()));
+      agen.push(buatAgen(kiri ? -40 : lebar() + 40, gulir + acak(0.2, 0.8) * tinggi()));
       jedaLahir = 0.035;
     }
 
@@ -657,6 +730,17 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     }
 
 
+    // Pengawas: kalau 6 detik tidak ada satu pun kursor yang mengerjakan tugas
+    // padahal masih ada yang tersisa, anggap selesai (lebih aman daripada batas
+    // waktu tetap, karena jumlah item sekarang bisa mencapai ratusan).
+    if (dimulai && sisa.length) {
+      if (agen.some((c) => c.tugas)) tanpaKerja = 0;
+      else {
+        tanpaKerja += dt;
+        if (tanpaKerja > 6 || waktu > 240) selesai();
+      }
+    }
+
     if (!dijadwalkan && !sisa.length && agen.every((c) => !c.tugas)) {
       // Semua tugas selesai: biarkan gerombolan mengitari layar sebentar, lalu
       // usai. Penanda `dijadwalkan` penting — tanpa itu hitung mundur ini
@@ -674,7 +758,13 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
     return { cancel() {} };
   }
 
-  watchdog = window.setTimeout(selesai, 20000 / Math.max(0.2, speed));
+  // Pengawas absolut (detik NYATA): jaring pengaman kalau rAF berhenti total
+  // (tab disembunyikan, misalnya). Dulu 20 detik tetap — terlalu pendek sejak
+  // cakupannya seluruh halaman dengan ratusan item. Sekarang menyesuaikan
+  // jumlah item dengan lantai 60 detik. Untuk keadaan lambat tapi masih jalan,
+  // yang berlaku adalah pengawas kemajuan & batas waktu engine di `langkah`.
+  const batasAbsolut = clamp(items.length * 0.25, 60, 300);
+  watchdog = window.setTimeout(selesai, (batasAbsolut * 1000) / Math.max(0.2, speed));
   raf = requestAnimationFrame(langkah);
 
   return {
@@ -682,6 +772,10 @@ export function mulaiSwarm(opsi: SwarmOptions): SwarmHandle {
       berhenti = true;
       cancelAnimationFrame(raf);
       window.clearTimeout(watchdog);
+      if (bisaGulir) {
+        window.scrollTo(0, gulirAwal);
+        document.documentElement.style.scrollBehavior = gulirHalusAsli;
+      }
       stage.remove();
     },
   };
