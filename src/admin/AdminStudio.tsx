@@ -3229,30 +3229,36 @@ export default function AdminStudio({ onExit }: { onExit: () => void }) {
                     </select>
                   </div>
                   <div className="admin-field">
-                    <label>Jumlah Kursor — Desktop</label>
+                    <label>Jumlah Kursor — Desktop (minimum)</label>
                     <input
                       type="number"
-                      min={2}
-                      max={8}
-                      value={draft.swarm?.agents?.desktop ?? 6}
+                      min={4}
+                      max={24}
+                      value={draft.swarm?.agents?.desktop ?? 8}
                       onChange={(e) =>
-                        ubahSwarm((s) => { s.agents.desktop = Math.max(2, Math.min(8, Number(e.target.value) || 6)); })
+                        ubahSwarm((s) => { s.agents.desktop = Math.max(4, Math.min(24, Number(e.target.value) || 8)); })
                       }
                     />
                   </div>
                   <div className="admin-field">
-                    <label>Jumlah Kursor — HP</label>
+                    <label>Jumlah Kursor — HP (minimum)</label>
                     <input
                       type="number"
-                      min={2}
-                      max={8}
-                      value={draft.swarm?.agents?.mobile ?? 4}
+                      min={4}
+                      max={24}
+                      value={draft.swarm?.agents?.mobile ?? 8}
                       onChange={(e) =>
-                        ubahSwarm((s) => { s.agents.mobile = Math.max(2, Math.min(8, Number(e.target.value) || 4)); })
+                        ubahSwarm((s) => { s.agents.mobile = Math.max(4, Math.min(24, Number(e.target.value) || 8)); })
                       }
                     />
                   </div>
                 </div>
+                <p className="admin-note">
+                  Jumlah kursor di atas adalah <strong>jumlah minimum yang selalu dipertahankan</strong>.
+                  Saat pembukaan <strong>18 kursor</strong> masuk bersamaan, lalu jumlahnya menyesuaikan
+                  banyaknya pekerjaan — persis seperti referensinya. HP kini diperlakukan sama seperti
+                  desktop.
+                </p>
                 <p className="admin-note">
                   Bunyi efek menuruti aturan backsound di atas: hanya terdengar bila pengunjung{' '}
                   <em>sudah</em> menyalakan backsound sendiri (tidak ada autoplay), dan selama efek berjalan

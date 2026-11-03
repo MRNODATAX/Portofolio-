@@ -284,3 +284,30 @@ di Fase 3C–3G.
 | Tugas diambil yang terdekat | bandingkan jarak yang diambil vs jarak rata-rata; harus di bawah |
 | Efek tidak pernah macet > 15 detik | watchdog tetap aktif |
 | Regresi situs tetap hijau | `regresi.mjs` 15/15 |
+
+### 11.4 Hasil verifikasi Fase 3A (terukur, 2026-11-03)
+
+Sumber angka: kait dev `__jejakSwarm` / `__profilSwarm` / `__tugasSwarm` di
+`src/swarm/engine.ts` — hanya menyala saat `npm run dev`, terbuang dari build
+produksi (sudah dicek: 0 kemunculan di `dist/`).
+
+| Kriteria (11.3) | Hasil |
+|---|---|
+| 18 kursor tampil saat intro | ✅ 18 kursor |
+| Masuk dari luar layar kiri & kanan | ✅ 9 dari kiri, 9 dari kanan, semua lahir di luar viewport |
+| Gerakan melengkung | ✅ simpangan dari garis lurus: median 9,8 px, maks 292 px |
+| 25% kursor "cepat" | ✅ 4/18 cepat; speed 1029–1497 vs 313–710, force 4330–5948 vs 926–1660 |
+| Tugas diambil yang terdekat | ✅ 15/15 di bawah jarak rata-rata (499 px vs 673 px) |
+| Kursor berlebih pensiun | ✅ 18 → 15 (menuju 8 bila tugas lebih lama) |
+| Efek selesai & menyingkir | ✅ 4,4 detik (hero saja; akan memanjang di Fase 3B) |
+| Regresi situs | ✅ 16/16 (`regresi.mjs`) |
+
+Catatan penting:
+
+- **Durasi 4,4 detik baru untuk hero** (15 item). Spesifikasi "durasi penuh
+  20–45 detik" baru tercapai di Fase 3B saat seluruh halaman + auto-scroll Tour
+  ikut direplikasi. Jangan dipotong, biarkan memanjang.
+- **Kursor "cepat" tidak tampak saat terbang masuk** (1300–2077 px/s untuk semua
+  kursor) karena yang membatasi adalah gaya radial `clamp((rr-d)×4, -2600, 1400)`
+  — sama persis dengan rumus referensi. Bedanya baru terasa saat mengitar
+  (spin) dan saat mengetik.

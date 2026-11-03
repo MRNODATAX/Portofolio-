@@ -813,8 +813,8 @@
     "auto": true,
     "speed": 1,
     "agents": {
-      "desktop": 6,
-      "mobile": 4
+      "desktop": 8,
+      "mobile": 8
     },
     "sound": true
   },
