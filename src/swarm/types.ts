@@ -56,16 +56,24 @@ export interface SwarmOptions {
   bunyi?: BunyiSwarm | null;
 }
 
-/** 32 nama agen — jumlah & urutannya mengikuti spesifikasi referensi. */
 export const NAMA_AGEN = [
-  'Ada', 'Linus', 'Grace', 'Alan', 'Margaret', 'Ken', 'Barbara', 'Dennis',
-  'Radia', 'Guido', 'Frances', 'Bjarne', 'Hedy', 'Tim', 'Katherine', 'Edsger',
-  'Joan', 'Donald', 'Sophie', 'Niklaus', 'Anita', 'Brian', 'Mary', 'Rob',
-  'Ida', 'Yukihiro', 'Shafi', 'Leslie', 'Jean', 'Vint', 'Lynn', 'Bram',
+  'Ada',
+  'Linus',
+  'Grace',
+  'Alan',
+  'Margaret',
+  'Ken',
+  'Barbara',
+  'Radia',
 ];
 
-/** 12 warna kursor — paletnya mengikuti spesifikasi referensi. */
 export const WARNA_AGEN = [
-  '#F24E1E', '#A259FF', '#1ABCFE', '#0ACF83', '#FF7262', '#FFC700',
-  '#9747FF', '#E8467C', '#14AE5C', '#0D99FF', '#FF8A00', '#00B5CE',
+  '#F24E1E',
+  '#A259FF',
+  '#1ABCFE',
+  '#0ACF83',
+  '#FF7262',
+  '#FFC700',
+  '#9747FF',
+  '#00B5CE',
 ];
