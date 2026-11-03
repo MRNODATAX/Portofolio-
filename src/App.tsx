@@ -19,8 +19,11 @@ import Personal from './components/Personal';
 import { useMotion } from './hooks/useMotion';
 import { useExperience } from './hooks/useExperience';
 import { useTheme } from './hooks/useTheme';
+import { useSwarmIntro } from './hooks/useSwarmIntro';
 
 const AdminStudio = lazy(() => import('./admin/AdminStudio'));
+// Fase 1 (spike): layer swarm dimuat terpisah supaya tidak menambah bundle awal.
+const SwarmLayer = lazy(() => import('./swarm/SwarmLayer'));
 
 /**
  * Urutan tautan HARUS sama dengan urutan section yang dirender di halaman
@@ -102,6 +105,7 @@ export default function App() {
     return fallback;
   }, [current, navLinks]);
   const still = reduced || motionPaused;
+  const swarm = useSwarmIntro();
 
   useExperience(!still && !isAdmin);
 
@@ -420,6 +424,11 @@ export default function App() {
                 © {new Date().getFullYear()} {footer.copyrightName}
                 <br />
                 {footer.copyrightNote}
+                {/* Opsi B (bonus): catatan kecil untuk pemilik ekstensi Swarm Rebuild. */}
+                <br />
+                <span className="footer-swarm-note">
+                  Punya ekstensi Swarm Rebuild? Tekan <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> di halaman ini.
+                </span>
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
                 <a href="/admin" onClick={openAdmin} className="footer-admin-link">
@@ -436,6 +445,11 @@ export default function App() {
         </footer>
       </main>
       <RelayBubble />
+      {swarm.aktif && (
+        <Suspense fallback={null}>
+          <SwarmLayer key={swarm.putaran} agents={swarm.agents} speed={swarm.speed} onDone={swarm.tutup} />
+        </Suspense>
+      )}
     </>
   );
 }
