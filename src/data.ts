@@ -22,6 +22,7 @@ export const categoryLabels: Record<string, string> = {
   Utilities: 'Tools',
   Productivity: 'Produktivitas',
   'Archive Experiments': 'Eksperimen',
+  'Web Platform': 'Platform Web',
 };
 
 export const PRESET_WORK_COVERS = [

@@ -72,6 +72,54 @@
     "intro": "Kumpulan proyek, sistem automasi, dan eksperimen web & aplikasi yang pernah aku bangun — mulai dari solusi terapan aktif, bot cerdas, hingga prototipe eksplorasi.",
     "projects": [
       {
+        "id": "nodatagpt",
+        "name": "NodataGPT",
+        "category": "AI Tools",
+        "url": "https://nodatagpt.web.id",
+        "image": "https://www.nodatagpt.web.id/logo.png",
+        "imageFit": "contain",
+        "imageFocal": "50% 50%",
+        "description": "Ruang percakapan AI multi-model: 76 jalur chat dan 18 mesin gambar AI dalam satu antarmuka, dengan penalaran DeepThink, pratinjau artifact langsung, serta Auto-Fallback otomatis saat server bermasalah.",
+        "summary": "Platform chat AI multi-model dengan DeepThink, pratinjau artifact langsung, dan pengalihan server otomatis.",
+        "problem": "Bergantung pada satu model AI membuat percakapan mudah terputus: server melambat, kuota habis, atau model yang dipakai kurang tepat untuk kebutuhan kode, gambar, dan logika.",
+        "exploration": "Merancang lapisan router yang memetakan tiap permintaan ke jalur chat paling cocok, mode DeepThink untuk penalaran bertahap, artifact HTML dan SVG yang dapat dipratinjau langsung di chat, serta Auto-Fallback agar percakapan tetap berjalan tanpa intervensi pengguna.",
+        "outcome": "Menjadi gerbang utama eksplorasi AI harian, dari riset dan ngoding sampai membuat gambar dan obrolan karakter, dalam satu ruang yang tetap tangguh saat salah satu server terganggu.",
+        "ecosystem": [
+          "Multi-Model Router",
+          "DeepThink",
+          "AI Image",
+          "Artifact Preview",
+          "Auto-Fallback"
+        ],
+        "status": "LIVE_VERIFIED",
+        "type": "work",
+        "visualType": "real"
+      },
+      {
+        "id": "nodatanime",
+        "name": "NodataNime",
+        "category": "Web Platform",
+        "url": "https://nodatanime.web.id",
+        "image": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/21-wf37VakJmZqs.jpg",
+        "imageFit": "cover",
+        "imageFocal": "50% 50%",
+        "description": "Portal streaming anime subtitle Indonesia dengan katalog tayang per hari, rilis episode terbaru, film, kurasi rekomendasi, indeks A ke Z, dan pengingat hemat kuota, yang juga dapat dipasang sebagai aplikasi PWA.",
+        "summary": "Portal streaming anime Sub Indo HD dengan katalog tayang, kurasi rekomendasi, dan dukungan PWA.",
+        "problem": "Menonton anime Sub Indo sering terganggu iklan pop-up, katalog yang tidak terpelihara, dan tidak adanya pengingat jadwal tayang per hari.",
+        "exploration": "Membangun katalog dengan filter genre dan status tayang, jadwal per hari, kurasi rekomendasi berbasis popularitas, pengingat konsumsi data antara 720p dan 1080p, serta pemasangan PWA agar dapat dibuka dari layar utama ponsel.",
+        "outcome": "Menjadi salah satu karya yang paling sering dikunjungi, dengan kanal lapor kendala langsung ke admin dan dukungan komunitas sebagai jalur perawatan berkelanjutan.",
+        "ecosystem": [
+          "Streaming",
+          "PWA",
+          "Sub Indo",
+          "Katalog & Filter",
+          "QRIS"
+        ],
+        "status": "LIVE_VERIFIED",
+        "type": "work",
+        "visualType": "real"
+      },
+      {
         "id": "am-proaktif",
         "name": "Gemini Web AI Chat",
         "category": "AI Tools",
